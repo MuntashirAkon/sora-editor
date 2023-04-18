@@ -24,8 +24,10 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tm4e.core.TMException;
 import org.eclipse.tm4e.core.internal.grammar.dependencies.AbsoluteRuleReference.TopLevelRepositoryRuleReference;
@@ -50,7 +52,7 @@ public class ScopeDependencyProcessor {
         final Set<IRawRule> visitedRule = new HashSet<>();
 
         void add(final AbsoluteRuleReference reference) {
-            final var key = reference.toKey();
+            final String key = reference.toKey();
             if (this.seenReferenceKeys.contains(key)) {
                 return;
             }
@@ -74,15 +76,15 @@ public class ScopeDependencyProcessor {
     }
 
     public void processQueue() {
-        final var q = Q;
+        final Deque<AbsoluteRuleReference> q = Q;
         Q = new ArrayDeque<>();
 
-        final var deps = new ExternalReferenceCollector();
-        for (final var dep : q) {
+        final ExternalReferenceCollector deps = new ExternalReferenceCollector();
+        for (final AbsoluteRuleReference dep : q) {
             collectReferencesOfReference(dep, this.initialScopeName, this.repo, deps);
         }
 
-        for (final var dep : deps.references) {
+        for (final AbsoluteRuleReference dep : deps.references) {
             if (dep instanceof TopLevelRuleReference) {
                 if (this.seenFullScopeRequests.contains(dep.scopeName)) {
                     // already processed
@@ -111,7 +113,7 @@ public class ScopeDependencyProcessor {
             final IGrammarRepository repo,
             final ExternalReferenceCollector result) {
 
-        final var selfGrammar = repo.lookup(reference.scopeName);
+        final @Nullable IRawGrammar selfGrammar = repo.lookup(reference.scopeName);
         if (selfGrammar == null) {
             if (reference.scopeName.equals(baseGrammarScopeName)) {
                 throw new TMException("No grammar provided for <" + initialScopeName + ">");
@@ -119,21 +121,21 @@ public class ScopeDependencyProcessor {
             return;
         }
 
-        final var baseGrammar = castNonNull(repo.lookup(baseGrammarScopeName));
+        final @NonNull IRawGrammar baseGrammar = castNonNull(repo.lookup(baseGrammarScopeName));
 
         if (reference instanceof TopLevelRuleReference) {
             collectExternalReferencesInTopLevelRule(new Context(baseGrammar, selfGrammar), result);
         } else if (reference instanceof TopLevelRepositoryRuleReference) {
-            var ref = (TopLevelRepositoryRuleReference) reference;
+            TopLevelRepositoryRuleReference ref = (TopLevelRepositoryRuleReference) reference;
             collectExternalReferencesInTopLevelRepositoryRule(
                     ref.ruleName,
                     new ContextWithRepository(baseGrammar, selfGrammar, selfGrammar.getRepository()),
                     result);
         }
 
-        final var injections = repo.injections(reference.scopeName);
+        final @Nullable Collection<String> injections = repo.injections(reference.scopeName);
         if (injections != null) {
-            for (final var injection : injections) {
+            for (final String injection : injections) {
                 result.add(new TopLevelRuleReference(injection));
             }
         }
@@ -170,7 +172,7 @@ public class ScopeDependencyProcessor {
                                                            final ExternalReferenceCollector result) {
 
         if (context.repository != null) {
-            final var rule = context.repository.getRule(ruleName);
+            final @Nullable IRawRule rule = context.repository.getRule(ruleName);
             if (rule != null) {
                 collectExternalReferencesInRules(List.of(rule), context, result);
             }
@@ -178,14 +180,14 @@ public class ScopeDependencyProcessor {
     }
 
     void collectExternalReferencesInTopLevelRule(final Context context, final ExternalReferenceCollector result) {
-        final var patterns = context.selfGrammar.getPatterns();
+        final @Nullable Collection<IRawRule> patterns = context.selfGrammar.getPatterns();
         if (patterns != null) {
             collectExternalReferencesInRules(
                     patterns,
                     new ContextWithRepository(context, context.selfGrammar.getRepository()),
                     result);
         }
-        final var injections = context.selfGrammar.getInjections();
+        final @Nullable Map<String, IRawRule> injections = context.selfGrammar.getInjections();
         if (injections != null) {
             collectExternalReferencesInRules(
                     injections.values(),
@@ -199,28 +201,28 @@ public class ScopeDependencyProcessor {
             final ContextWithRepository context,
             final ExternalReferenceCollector result) {
 
-        for (final var rule : rules) {
+        for (final IRawRule rule : rules) {
             if (result.visitedRule.contains(rule)) {
                 continue;
             }
             result.visitedRule.add(rule);
 
-            final var patternRepository = rule.getRepository() == null
+            final @Nullable IRawRepository patternRepository = rule.getRepository() == null
                     ? context.repository
                     : IRawRepository.merge(context.repository, rule.getRepository());
 
-            final var patternPatterns = rule.getPatterns();
+            final @Nullable Collection<IRawRule> patternPatterns = rule.getPatterns();
             if (patternPatterns != null) {
                 collectExternalReferencesInRules(patternPatterns, new ContextWithRepository(context, patternRepository),
                         result);
             }
 
-            final var include = rule.getInclude();
+            final @Nullable String include = rule.getInclude();
             if (include == null) {
                 continue;
             }
 
-            final var reference = IncludeReference.parseInclude(include);
+            final IncludeReference reference = IncludeReference.parseInclude(include);
 
             switch (reference.kind) {
                 case Base:
@@ -243,7 +245,7 @@ public class ScopeDependencyProcessor {
                             : null;
 
                     if (selfGrammar != null) {
-                        final var newContext = new ContextWithRepository(context.baseGrammar, selfGrammar,
+                        final ContextWithRepository newContext = new ContextWithRepository(context.baseGrammar, selfGrammar,
                                 patternRepository);
                         if (reference.kind == IncludeReference.Kind.TopLevelRepositoryReference) {
                             collectExternalReferencesInTopLevelRepositoryRule(reference.ruleName, newContext, result);

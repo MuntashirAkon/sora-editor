@@ -86,7 +86,7 @@ public final class StringUtils {
 	public static String toString(@Nullable final Object object, final Consumer<StringBuilder> fieldsBuilder) {
 		if (object == null)
 			return "null";
-		final var sb = new StringBuilder(object.getClass().getSimpleName());
+		final StringBuilder sb = new StringBuilder(object.getClass().getSimpleName());
 		sb.append('{');
 		fieldsBuilder.accept(sb);
 		sb.append('}');

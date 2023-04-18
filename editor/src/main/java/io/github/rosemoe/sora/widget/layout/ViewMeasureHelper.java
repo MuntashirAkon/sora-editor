@@ -41,11 +41,11 @@ public class ViewMeasureHelper {
     public static long getDesiredSize(int widthMeasureSpec, int heightMeasureSpec, float gutterSize, float rowHeight, boolean wordwrap, int tabSize, @NonNull Content text, @NonNull Paint paint) {
         int maxWidth = View.MeasureSpec.getSize(widthMeasureSpec);
         int maxHeight = View.MeasureSpec.getSize(heightMeasureSpec);
-        var measurer = new SingleCharacterWidths(tabSize);
+        SingleCharacterWidths measurer = new SingleCharacterWidths(tabSize);
         if (wordwrap) {
             if (View.MeasureSpec.getMode(widthMeasureSpec) != View.MeasureSpec.EXACTLY) {
-                var lines = View.MeasureSpec.getMode(heightMeasureSpec) != View.MeasureSpec.EXACTLY ? new int[text.getLineCount()] : null;
-                var lineMaxSize = new MutableInt(0);
+                int[] lines = View.MeasureSpec.getMode(heightMeasureSpec) != View.MeasureSpec.EXACTLY ? new int[text.getLineCount()] : null;
+                MutableInt lineMaxSize = new MutableInt(0);
                 text.runReadActionsOnLines(0, text.getLineCount() - 1, (Content.ContentLineConsumer) (index, line, directions) -> {
                     int measured = (int) Math.ceil(measurer.measureText(line.value, 0, line.length(), paint));
                     if (measured > lineMaxSize.value) {
@@ -58,7 +58,7 @@ public class ViewMeasureHelper {
                 int width = (int) Math.min(maxWidth, lineMaxSize.value + gutterSize);
                 widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
                 if (lines != null) {
-                    var rowCount = new MutableInt(0);
+                    MutableInt rowCount = new MutableInt(0);
                     int availableSize = (int) (width - gutterSize);
                     if (availableSize <= 0) {
                         rowCount.value = text.length();
@@ -72,7 +72,7 @@ public class ViewMeasureHelper {
                 }
             } else {
                 if (View.MeasureSpec.getMode(heightMeasureSpec) != View.MeasureSpec.EXACTLY) {
-                    var rowCount = new MutableInt(0);
+                    MutableInt rowCount = new MutableInt(0);
                     int availableSize = (int) (maxWidth - gutterSize);
                     if (availableSize <= 0) {
                         rowCount.value = text.length();
@@ -88,18 +88,18 @@ public class ViewMeasureHelper {
             }
         } else {
             if (View.MeasureSpec.getMode(widthMeasureSpec) != View.MeasureSpec.EXACTLY) {
-                var lineMaxSize = new MutableInt(0);
+                MutableInt lineMaxSize = new MutableInt(0);
                 text.runReadActionsOnLines(0, text.getLineCount() - 1, (Content.ContentLineConsumer) (index, line, directions) -> {
                     int measured = (int) Math.ceil(measurer.measureText(line.value, 0, line.length(), paint));
                     if (measured > lineMaxSize.value) {
                         lineMaxSize.value = measured;
                     }
                 });
-                var width = (int) Math.min(lineMaxSize.value + gutterSize, maxWidth);
+                int width = (int) Math.min(lineMaxSize.value + gutterSize, maxWidth);
                 widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
             }
             if (View.MeasureSpec.getSize(heightMeasureSpec) != View.MeasureSpec.EXACTLY) {
-                var height = Math.min(maxHeight, (int) (rowHeight * text.getLineCount()));
+                int height = Math.min(maxHeight, (int) (rowHeight * text.getLineCount()));
                 heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
             }
         }

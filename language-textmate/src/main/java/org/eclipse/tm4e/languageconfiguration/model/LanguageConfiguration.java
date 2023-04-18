@@ -38,8 +38,10 @@ import org.eclipse.tm4e.languageconfiguration.utils.RegExpUtils;
 import org.eclipse.tm4e.languageconfiguration.utils.TextUtils;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * The language configuration interface defines the contract between extensions and various editor features, like
@@ -67,29 +69,29 @@ public class LanguageConfiguration {
                         return null;
                     }
 
-                    final var jsonObj = json.getAsJsonObject();
-                    final var beforeText = getAsPattern(jsonObj.get("beforeText")); //$NON-NLS-1$
+                    final JsonObject jsonObj = json.getAsJsonObject();
+                    final @Nullable Pattern beforeText = getAsPattern(jsonObj.get("beforeText")); //$NON-NLS-1$
                     if (beforeText == null) {
                         return null;
                     }
 
-                    final var actionElem = jsonObj.get("action"); //$NON-NLS-1$
+                    final JsonElement actionElem = jsonObj.get("action"); //$NON-NLS-1$
                     if (actionElem != null && actionElem.isJsonObject()) {
-                        final var actionJsonObj = actionElem.getAsJsonObject();
-                        var action1 = actionJsonObj.get("indentAction");
-                        var action2 = actionJsonObj.get("indent");
-                        final var indentActionString = getAsString(action1 == null ? action2 : action1); //$NON-NLS-1$
+                        final JsonObject actionJsonObj = actionElem.getAsJsonObject();
+                        JsonElement action1 = actionJsonObj.get("indentAction");
+                        JsonElement action2 = actionJsonObj.get("indent");
+                        final @Nullable String indentActionString = getAsString(action1 == null ? action2 : action1); //$NON-NLS-1$
                         if (indentActionString != null) {
-                            final var afterText = getAsPattern(jsonObj.get("afterText")); //$NON-NLS-1$
-                            final var indentAction = IndentAction.valueOf(
+                            final @Nullable Pattern afterText = getAsPattern(jsonObj.get("afterText")); //$NON-NLS-1$
+                            final IndentAction indentAction = IndentAction.valueOf(
                                     TextUtils.firstCharToUpperCase(indentActionString));
-                            final var removeText = getAsInteger(actionJsonObj.get("removeText")); //$NON-NLS-1$
-                            final var appendText = getAsString(actionJsonObj.get("appendText"));
+                            final @Nullable Integer removeText = getAsInteger(actionJsonObj.get("removeText")); //$NON-NLS-1$
+                            final @Nullable String appendText = getAsString(actionJsonObj.get("appendText"));
 
-                            final var previousLineText = getAsPattern(actionJsonObj.get("previousLineText"));
+                            final @Nullable Pattern previousLineText = getAsPattern(actionJsonObj.get("previousLineText"));
 
                             //$NON-NLS-1$
-                            final var action = new EnterAction(indentAction);
+                            final EnterAction action = new EnterAction(indentAction);
                             action.appendText = appendText;
                             action.removeText = removeText;
                             return new OnEnterRule(beforeText, afterText, previousLineText, action);
@@ -104,15 +106,15 @@ public class LanguageConfiguration {
                     }
 
                     // ex: {"lineComment": "//","blockComment": [ "/*", "*/" ]}
-                    final var jsonObj = json.getAsJsonObject();
-                    final var lineComment = getAsString(jsonObj.get("lineComment")); //$NON-NLS-1$
-                    final var blockCommentElem = jsonObj.get("blockComment"); //$NON-NLS-1$
+                    final JsonObject jsonObj = json.getAsJsonObject();
+                    final @Nullable String lineComment = getAsString(jsonObj.get("lineComment")); //$NON-NLS-1$
+                    final JsonElement blockCommentElem = jsonObj.get("blockComment"); //$NON-NLS-1$
                     CharacterPair blockComment = null;
                     if (blockCommentElem != null && blockCommentElem.isJsonArray()) {
-                        final var blockCommentArray = blockCommentElem.getAsJsonArray();
+                        final JsonArray blockCommentArray = blockCommentElem.getAsJsonArray();
                         if (blockCommentArray.size() == 2) {
-                            final var blockCommentStart = getAsString(blockCommentArray.get(0));
-                            final var blockCommentEnd = getAsString(blockCommentArray.get(1));
+                            final @Nullable String blockCommentStart = getAsString(blockCommentArray.get(0));
+                            final @Nullable String blockCommentEnd = getAsString(blockCommentArray.get(1));
                             if (blockCommentStart != null && blockCommentEnd != null) {
                                 blockComment = new CharacterPair(blockCommentStart, blockCommentEnd);
                             }
@@ -131,13 +133,13 @@ public class LanguageConfiguration {
                     }
 
                     // ex: ["{","}"]
-                    final var charsPair = json.getAsJsonArray();
+                    final JsonArray charsPair = json.getAsJsonArray();
                     if (charsPair.size() != 2) {
                         return null;
                     }
 
-                    final var open = getAsString(charsPair.get(0));
-                    final var close = getAsString(charsPair.get(1));
+                    final @Nullable String open = getAsString(charsPair.get(0));
+                    final @Nullable String close = getAsString(charsPair.get(1));
 
                     return open == null || close == null
                             ? null
@@ -150,7 +152,7 @@ public class LanguageConfiguration {
                     String close = null;
                     if (json.isJsonArray()) {
                         // ex: ["{","}"]
-                        final var charsPair = json.getAsJsonArray();
+                        final JsonArray charsPair = json.getAsJsonArray();
                         if (charsPair.size() != 2) {
                             return null;
                         }
@@ -158,7 +160,7 @@ public class LanguageConfiguration {
                         close = getAsString(charsPair.get(1));
                     } else if (json.isJsonObject()) {
                         // ex: {"open":"'","close":"'", "notIn": ["string", "comment"]}
-                        final var autoClosePair = json.getAsJsonObject();
+                        final JsonObject autoClosePair = json.getAsJsonObject();
                         open = getAsString(autoClosePair.get("open")); //$NON-NLS-1$
                         close = getAsString(autoClosePair.get("close")); //$NON-NLS-1$
                     }
@@ -170,12 +172,12 @@ public class LanguageConfiguration {
 
                 .registerTypeAdapter(AutoClosingPairConditional.class, (JsonDeserializer<AutoClosingPairConditional>) (
                         json, typeOfT, context) -> {
-                    final var notInList = new ArrayList<String>(2);
+                    final ArrayList<String> notInList = new ArrayList<String>(2);
                     String open = null;
                     String close = null;
                     if (json.isJsonArray()) {
                         // ex: ["{","}"]
-                        final var charsPair = json.getAsJsonArray();
+                        final JsonArray charsPair = json.getAsJsonArray();
                         if (charsPair.size() != 2) {
                             return null;
                         }
@@ -183,13 +185,13 @@ public class LanguageConfiguration {
                         close = getAsString(charsPair.get(1));
                     } else if (json.isJsonObject()) {
                         // ex: {"open":"'","close":"'", "notIn": ["string", "comment"]}
-                        final var autoClosePair = json.getAsJsonObject();
+                        final JsonObject autoClosePair = json.getAsJsonObject();
                         open = getAsString(autoClosePair.get("open")); //$NON-NLS-1$
                         close = getAsString(autoClosePair.get("close")); //$NON-NLS-1$
-                        final var notInElem = autoClosePair.get("notIn"); //$NON-NLS-1$
+                        final JsonElement notInElem = autoClosePair.get("notIn"); //$NON-NLS-1$
                         if (notInElem != null && notInElem.isJsonArray()) {
                             for (JsonElement element : notInElem.getAsJsonArray()) {
-                                final var string = getAsString(element);
+                                final @Nullable String string = getAsString(element);
                                 if (string != null) {
                                     notInList.add(string);
                                 }
@@ -208,18 +210,18 @@ public class LanguageConfiguration {
                         return null;
                     }
 
-                    final var object = json.getAsJsonObject();
+                    final JsonObject object = json.getAsJsonObject();
 
-                    final var increaseIndentPattern = getAsPattern(
+                    final @Nullable Pattern increaseIndentPattern = getAsPattern(
                             object.get("increaseIndentPattern"));
 
-                    final var decreaseIndentPattern = getAsPattern(
+                    final @Nullable Pattern decreaseIndentPattern = getAsPattern(
                             object.get("decreaseIndentPattern"));
 
-                    final var indentNextLinePattern = getAsPattern(
+                    final @Nullable Pattern indentNextLinePattern = getAsPattern(
                             object.get("indentNextLinePattern"));
 
-                    final var unIndentedLinePattern = getAsPattern(
+                    final @Nullable Pattern unIndentedLinePattern = getAsPattern(
                             object.get("unIndentedLinePattern"));
 
                     if (increaseIndentPattern == null || decreaseIndentPattern == null) {
@@ -235,13 +237,13 @@ public class LanguageConfiguration {
                     }
 
                     // ex: {"offSide": true, "markers": {"start": "^\\s*/", "end": "^\\s*"}}
-                    final var jsonObj = json.getAsJsonObject();
-                    final var markersElem = jsonObj.get("markers"); //$NON-NLS-1$
+                    final JsonObject jsonObj = json.getAsJsonObject();
+                    final JsonElement markersElem = jsonObj.get("markers"); //$NON-NLS-1$
                     if (markersElem != null && markersElem.isJsonObject()) {
-                        final var offSide = getAsBoolean(jsonObj.get("offSide"), false); //$NON-NLS-1$
-                        final var markersObj = markersElem.getAsJsonObject();
-                        final var startMarker = getAsPattern(markersObj.get("start")); //$NON-NLS-1$
-                        final var endMarker = getAsPattern(markersObj.get("end")); //$NON-NLS-1$
+                        final boolean offSide = getAsBoolean(jsonObj.get("offSide"), false); //$NON-NLS-1$
+                        final JsonObject markersObj = markersElem.getAsJsonObject();
+                        final @Nullable Pattern startMarker = getAsPattern(markersObj.get("start")); //$NON-NLS-1$
+                        final @Nullable Pattern endMarker = getAsPattern(markersObj.get("end")); //$NON-NLS-1$
                         if (startMarker != null && endMarker != null) {
                             return new FoldingRules(offSide, startMarker, endMarker);
                         }

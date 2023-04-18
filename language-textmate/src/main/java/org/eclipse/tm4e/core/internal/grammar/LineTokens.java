@@ -98,8 +98,8 @@ final class LineTokens {
 
 		if (this._emitBinaryTokens) {
 			int metadata = scopesList.tokenAttributes;
-			var containsBalancedBrackets = false;
-			final var balancedBracketSelectors = this.balancedBracketSelectors;
+			boolean containsBalancedBrackets = false;
+			final @Nullable BalancedBracketSelectors balancedBracketSelectors = this.balancedBracketSelectors;
 			if (balancedBracketSelectors != null && balancedBracketSelectors.matchesAlways()) {
 				containsBalancedBrackets = true;
 			}
@@ -108,8 +108,8 @@ final class LineTokens {
 				|| balancedBracketSelectors != null
 					&& !balancedBracketSelectors.matchesAlways() && !balancedBracketSelectors.matchesNever()) {
 				// Only generate scope array when required to improve performance
-				final var scopes = scopesList.getScopeNames();
-				for (final var tokenType : _tokenTypeOverrides) {
+				final List<String> scopes = scopesList.getScopeNames();
+				for (final TokenTypeMatcher tokenType : _tokenTypeOverrides) {
 					if (tokenType.matcher.matches(scopes)) {
 						metadata = EncodedTokenAttributes.set(
 							metadata,

@@ -64,7 +64,7 @@ public class IdentifierAutoComplete {
      */
     @Deprecated
     private final static Comparator<CompletionItem> COMPARATOR = (p1, p2) -> {
-        var cmp1 = asString(p1.desc).compareTo(asString(p2.desc));
+        int cmp1 = asString(p1.desc).compareTo(asString(p2.desc));
         if (cmp1 < 0) {
             return 1;
         } else if (cmp1 > 0) {
@@ -91,9 +91,9 @@ public class IdentifierAutoComplete {
     public void setKeywords(String[] keywords, boolean lowCase) {
         this.keywords = keywords;
         keywordsAreLowCase = lowCase;
-        var map = new HashMap<String, Object>();
+        HashMap<String, Object> map = new HashMap<String, Object>();
         if (keywords != null) {
-            for (var keyword : keywords) {
+            for (String keyword : keywords) {
                 map.put(keyword, true);
             }
         }
@@ -114,9 +114,9 @@ public class IdentifierAutoComplete {
             @NonNull ContentReference reference, @NonNull CharPosition position,
             @NonNull String prefix, @NonNull CompletionPublisher publisher, @Nullable Identifiers userIdentifiers) {
 
-        var completionItemList = createCompletionItemList(prefix, userIdentifiers);
+        List<CompletionItem> completionItemList = createCompletionItemList(prefix, userIdentifiers);
 
-        var comparator = Comparators.getCompletionItemComparator(reference, position, completionItemList);
+        Comparator<CompletionItem> comparator = Comparators.getCompletionItemComparator(reference, position, completionItemList);
 
         publisher.addItems(completionItemList);
 
@@ -132,20 +132,20 @@ public class IdentifierAutoComplete {
         if (prefixLength == 0) {
             return Collections.emptyList();
         }
-        var result = new ArrayList<CompletionItem>();
-        final var keywordArray = keywords;
-        final var lowCase = keywordsAreLowCase;
-        final var keywordMap = this.keywordMap;
-        var match = prefix.toLowerCase(Locale.ROOT);
+        ArrayList<CompletionItem> result = new ArrayList<CompletionItem>();
+        final String[] keywordArray = keywords;
+        final boolean lowCase = keywordsAreLowCase;
+        final Map<String, Object> keywordMap = this.keywordMap;
+        String match = prefix.toLowerCase(Locale.ROOT);
 
         if (keywordArray != null) {
             if (lowCase) {
-                for (var kw : keywordArray) {
-                    var fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
+                for (String kw : keywordArray) {
+                    FuzzyScore fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
                             prefix.toLowerCase(Locale.ROOT),
                             0, kw, kw.toLowerCase(Locale.ROOT), 0, FuzzyScoreOptions.getDefault());
 
-                    var score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
+                    int score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
 
                     if (kw.startsWith(match) || score >= -20) {
                         result.add(new SimpleCompletionItem(kw, "Keyword", prefixLength, kw)
@@ -153,12 +153,12 @@ public class IdentifierAutoComplete {
                     }
                 }
             } else {
-                for (var kw : keywordArray) {
-                    var fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
+                for (String kw : keywordArray) {
+                    FuzzyScore fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
                             prefix.toLowerCase(Locale.ROOT),
                             0, kw, kw.toLowerCase(Locale.ROOT), 0, FuzzyScoreOptions.getDefault());
 
-                    var score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
+                    int score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
 
                     if (kw.toLowerCase(Locale.ROOT).startsWith(match) || score >= -20) {
                         result.add(new SimpleCompletionItem(kw, "Keyword", prefixLength, kw)
@@ -171,7 +171,7 @@ public class IdentifierAutoComplete {
             List<String> dest = new ArrayList<>();
 
             userIdentifiers.filterIdentifiers(prefix, dest);
-            for (var word : dest) {
+            for (String word : dest) {
                 if (keywordMap == null || !keywordMap.containsKey(word))
                     result.add(new SimpleCompletionItem(word, "Identifier", prefixLength, word)
                             .kind(CompletionItemKind.Identifier));
@@ -255,11 +255,11 @@ public class IdentifierAutoComplete {
         @Override
         public void filterIdentifiers(@NonNull String prefix, @NonNull List<String> dest) {
             for (String identifier : identifiers) {
-                var fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
+                FuzzyScore fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
                         prefix.toLowerCase(Locale.ROOT),
                         0, identifier, identifier.toLowerCase(Locale.ROOT), 0, FuzzyScoreOptions.getDefault());
 
-                var score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
+                int score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
 
                 if ((TextUtils.startsWith(identifier, prefix, true) || score >= -20) && !(prefix.length() == identifier.length() && TextUtils.startsWith(prefix, identifier, false))) {
                     dest.add(identifier);
@@ -288,7 +288,7 @@ public class IdentifierAutoComplete {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     identifierMap.computeIfAbsent(identifier, (x) -> new MutableInt(0)).increase();
                 } else {
-                    var counter = identifierMap.get(identifier);
+                    MutableInt counter = identifierMap.get(identifier);
                     if (counter == null) {
                         counter = new MutableInt(0);
                         identifierMap.put(identifier, counter);
@@ -303,7 +303,7 @@ public class IdentifierAutoComplete {
         public void identifierDecrease(@NonNull String identifier) {
             lock.lock();
             try {
-                var count = identifierMap.get(identifier);
+                MutableInt count = identifierMap.get(identifier);
                 if (count != null) {
                     if (count.decreaseAndGet() <= 0) {
                         identifierMap.remove(identifier);
@@ -334,11 +334,11 @@ public class IdentifierAutoComplete {
             if (acquired) {
                 try {
                     for (String s : identifierMap.keySet()) {
-                        var fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
+                        FuzzyScore fuzzyScore = Filters.fuzzyScoreGracefulAggressive(prefix,
                                 prefix.toLowerCase(Locale.ROOT),
                                 0, s, s.toLowerCase(Locale.ROOT), 0, FuzzyScoreOptions.getDefault());
 
-                        var score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
+                        int score = fuzzyScore == null ? -100 : fuzzyScore.getScore();
 
                         if ((TextUtils.startsWith(s, prefix, true) || score >= -20)  && !(prefix.length() == s.length() && TextUtils.startsWith(prefix, s, false))) {
                             dest.add(s);

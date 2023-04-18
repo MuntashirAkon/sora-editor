@@ -45,6 +45,7 @@ import io.github.rosemoe.sora.lang.styling.Spans;
 import io.github.rosemoe.sora.lang.styling.Styles;
 import io.github.rosemoe.sora.text.CharPosition;
 import io.github.rosemoe.sora.text.Content;
+import io.github.rosemoe.sora.text.ContentLine;
 import io.github.rosemoe.sora.text.ContentReference;
 import io.github.rosemoe.sora.util.IntPair;
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme;
@@ -78,7 +79,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
      * Run the given code block only when the receiver is currently non-null
      */
     protected void withReceiver(@NonNull ReceiverConsumer consumer) {
-        var r = getReceiver();
+        StyleReceiver r = getReceiver();
         if (r != null) {
             consumer.accept(r);
         }
@@ -120,7 +121,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                 thread.abort = true;
             }
         }
-        final var text = ref.getReference().copyText(false);
+        final Content text = ref.getReference().copyText(false);
         text.setUndoEnabled(false);
         thread = new LooperThread();
         thread.setName("AsyncAnalyzer-" + nextThreadId());
@@ -132,7 +133,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
 
     @Override
     public LineTokenizeResult<S, T> getState(int line) {
-        final var thread = this.thread;
+        final LooperThread thread = this.thread;
         if (thread == Thread.currentThread()) {
             if (line >= 0 && line < thread.states.size()) {
                 return thread.states.get(line);
@@ -171,14 +172,14 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
     }
 
     private void sendNewStyles(Styles styles) {
-        final var r = receiver;
+        final StyleReceiver r = receiver;
         if (r != null) {
             r.setStyles(this, styles);
         }
     }
 
     private void sendUpdate(Styles styles, int startLine, int endLine) {
-        final var r = receiver;
+        final StyleReceiver r = receiver;
         if (r != null) {
             r.updateStyles(this, styles, new SequenceUpdateRange(startLine, endLine));
         }
@@ -196,7 +197,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
     }
 
     public Styles getManagedStyles() {
-        var thread = Thread.currentThread();
+        Thread thread = Thread.currentThread();
         if (thread.getClass() != AsyncIncrementalAnalyzeManager.LooperThread.class) {
             throw new IllegalThreadStateException();
         }
@@ -273,7 +274,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                     if (this.line != null) {
                         this.line.lock.unlock();
                     }
-                    var locked = false;
+                    boolean locked = false;
                     try {
                         locked = lock.tryLock(100, TimeUnit.MICROSECONDS);
                     } catch (InterruptedException e) {
@@ -282,7 +283,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                     }
                     if (locked) {
                         try {
-                            var obj = lines.get(line);
+                            Line obj = lines.get(line);
                             if (obj.lock.tryLock()) {
                                 this.line = obj;
                             } else {
@@ -309,8 +310,8 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
 
             @Override
             public List<Span> getSpansOnLine(int line) {
-                var spans = new ArrayList<Span>();
-                var locked = false;
+                ArrayList<Span> spans = new ArrayList<Span>();
+                boolean locked = false;
                 try {
                     locked = lock.tryLock(1, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
@@ -348,11 +349,11 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                 lock.lock();
                 try {
                     while (lines.size() <= line) {
-                        var list = new ArrayList<Span>();
+                        ArrayList<Span> list = new ArrayList<Span>();
                         list.add(Span.obtain(0, EditorColorScheme.TEXT_NORMAL));
                         lines.add(new Line(list));
                     }
-                    var obj = lines.get(line);
+                    Line obj = lines.get(line);
                     obj.lock.lock();
                     try {
                         obj.spans = spans;
@@ -378,7 +379,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
             public void deleteLineAt(int line) {
                 lock.lock();
                 try {
-                    var obj = lines.get(line);
+                    Line obj = lines.get(line);
                     obj.lock.lock();
                     try {
                         lines.remove(line);
@@ -452,7 +453,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
         CodeBlockAnalyzeDelegate delegate = new CodeBlockAnalyzeDelegate(this);
 
         public void offerMessage(int what, @Nullable Object obj) {
-            var msg = Message.obtain();
+            Message msg = Message.obtain();
             msg.what = what;
             msg.obj = obj;
             offerMessage(msg);
@@ -467,12 +468,12 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
         private void initialize() {
             styles = new Styles(spans = new LockedSpans());
             S state = getInitialState();
-            var mdf = spans.modify();
+            Spans.Modifier mdf = spans.modify();
             for (int i = 0; i < shadowed.getLineCount() && !abort && !isInterrupted(); i++) {
-                var line = shadowed.getLine(i);
-                var result = tokenizeLine(line, state, i);
+                ContentLine line = shadowed.getLine(i);
+                LineTokenizeResult<S, T> result = tokenizeLine(line, state, i);
                 state = result.state;
-                var spans = result.spans != null ? result.spans : generateSpansForLine(result);
+                List<Span> spans = result.spans != null ? result.spans : generateSpansForLine(result);
                 states.add(result.clearSpans());
                 onAddState(result.state);
                 mdf.addLineAt(i, spans);
@@ -497,7 +498,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                     case MSG_MOD:
                         int updateStart = 0, updateEnd = 0;
                         if (!abort && !isInterrupted()) {
-                            var mod = (TextModification) msg.obj;
+                            TextModification mod = (TextModification) msg.obj;
                             int startLine = IntPair.getFirst(mod.start);
                             int endLine = IntPair.getFirst(mod.end);
 
@@ -508,21 +509,21 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                                 S state = startLine == 0 ? getInitialState() : states.get(startLine - 1).state;
                                 // Remove states
                                 if (endLine >= startLine + 1) {
-                                    var subList = states.subList(startLine + 1, endLine + 1);
+                                    List<LineTokenizeResult<S, T>> subList = states.subList(startLine + 1, endLine + 1);
                                     for (LineTokenizeResult<S, T> stLineTokenizeResult : subList) {
                                         onAbandonState(stLineTokenizeResult.state);
                                     }
                                     subList.clear();
                                 }
-                                var mdf = spans.modify();
+                                Spans.Modifier mdf = spans.modify();
                                 for (int i = startLine + 1; i <= endLine; i++) {
                                     mdf.deleteLineAt(startLine + 1);
                                 }
                                 int line = startLine;
                                 while (line < shadowed.getLineCount()) {
-                                    var res = tokenizeLine(shadowed.getLine(line), state, line);
+                                    LineTokenizeResult<S, T> res = tokenizeLine(shadowed.getLine(line), state, line);
                                     mdf.setSpansOnLine(line, res.spans != null ? res.spans : generateSpansForLine(res));
-                                    var old = states.set(line, res.clearSpans());
+                                    LineTokenizeResult<S, T> old = states.set(line, res.clearSpans());
                                     if (old != null) {
                                         onAbandonState(old.state);
                                     }
@@ -538,13 +539,13 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                                 shadowed.insert(IntPair.getFirst(mod.start), IntPair.getSecond(mod.start), mod.changedText);
                                 S state = startLine == 0 ? getInitialState() : states.get(startLine - 1).state;
                                 int line = startLine;
-                                var spans = styles.spans.modify();
+                                Spans.Modifier spans = styles.spans.modify();
                                 // Add Lines
                                 while (line <= endLine) {
-                                    var res = tokenizeLine(shadowed.getLine(line), state, line);
+                                    LineTokenizeResult<S, T> res = tokenizeLine(shadowed.getLine(line), state, line);
                                     if (line == startLine) {
                                         spans.setSpansOnLine(line, res.spans != null ? res.spans : generateSpansForLine(res));
-                                        var old = states.set(line, res.clearSpans());
+                                        LineTokenizeResult<S, T> old = states.set(line, res.clearSpans());
                                         if (old != null) {
                                             onAbandonState(old.state);
                                         }
@@ -559,12 +560,12 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                                 // line = end.line + 1, check whether the state equals
                                 boolean flag = true;
                                 while (line < shadowed.getLineCount() && flag) {
-                                    var res = tokenizeLine(shadowed.getLine(line), state, line);
+                                    LineTokenizeResult<S, T> res = tokenizeLine(shadowed.getLine(line), state, line);
                                     if (stateEquals(res.state, states.get(line).state)) {
                                         flag = false;
                                     }
                                     spans.setSpansOnLine(line, res.spans != null ? res.spans : generateSpansForLine(res));
-                                    var old = states.set(line, res.clearSpans());
+                                    LineTokenizeResult<S, T> old = states.set(line, res.clearSpans());
                                     if (old != null) {
                                         onAbandonState(old.state);
                                     }
@@ -576,7 +577,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
                             }
                         }
                         // Do not update incomplete code blocks
-                        var blocks = computeBlocks(shadowed, delegate);
+                        List<CodeBlock> blocks = computeBlocks(shadowed, delegate);
                         if (delegate.isNotCancelled()) {
                             styles.blocks = blocks;
                             styles.setSuppressSwitch(delegate.suppressSwitch);
@@ -597,7 +598,7 @@ public abstract class AsyncIncrementalAnalyzeManager<S, T> implements Incrementa
         public void run() {
             try {
                 while (!abort && !isInterrupted()) {
-                    var msg = messageQueue.take();
+                    Message msg = messageQueue.take();
                     if (!handleMessage(msg)) {
                         break;
                     }

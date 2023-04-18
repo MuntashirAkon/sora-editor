@@ -143,7 +143,7 @@ public abstract class AsyncFormatter implements Formatter {
     @Override
     public void cancel() {
         if (thread != null) {
-            final var t = thread;
+            final FormattingThread t = thread;
             if (t.isAlive()) {
                 t.interrupt();
             }

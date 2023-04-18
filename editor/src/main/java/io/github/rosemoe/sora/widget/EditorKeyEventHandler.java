@@ -32,8 +32,11 @@ import androidx.annotation.Nullable;
 import java.util.Objects;
 
 import io.github.rosemoe.sora.event.EditorKeyEvent;
+import io.github.rosemoe.sora.event.EventManager;
 import io.github.rosemoe.sora.event.InterceptTarget;
 import io.github.rosemoe.sora.event.KeyBindingEvent;
+import io.github.rosemoe.sora.lang.Language;
+import io.github.rosemoe.sora.lang.smartEnter.NewlineHandleResult;
 import io.github.rosemoe.sora.lang.smartEnter.NewlineHandler;
 import io.github.rosemoe.sora.text.CharPosition;
 import io.github.rosemoe.sora.text.Content;
@@ -114,11 +117,11 @@ class EditorKeyEventHandler {
      */
     public boolean onKeyDown(int keyCode, @NonNull KeyEvent event) {
         keyMetaStates.onKeyDown(event);
-        final var editor = this.editor;
-        final var eventManager = editor.eventManager;
+        final CodeEditor editor = this.editor;
+        final EventManager eventManager = editor.eventManager;
 
-        final var editorKeyEvent = new EditorKeyEvent(editor, event, EditorKeyEvent.Type.DOWN);
-        final var keybindingEvent =
+        final EditorKeyEvent editorKeyEvent = new EditorKeyEvent(editor, event, EditorKeyEvent.Type.DOWN);
+        final KeyBindingEvent keybindingEvent =
                 new KeyBindingEvent(editor,
                         event,
                         EditorKeyEvent.Type.DOWN,
@@ -127,9 +130,9 @@ class EditorKeyEventHandler {
             return editorKeyEvent.result(false);
         }
 
-        final var isShiftPressed = keyMetaStates.isShiftPressed();
-        final var isAltPressed = keyMetaStates.isAltPressed();
-        final var isCtrlPressed = event.isCtrlPressed();
+        final boolean isShiftPressed = keyMetaStates.isShiftPressed();
+        final boolean isAltPressed = keyMetaStates.isAltPressed();
+        final boolean isCtrlPressed = event.isCtrlPressed();
 
         // Currently, KeyBindingEvent is triggered only for (Shift | Ctrl | Alt) + alphabet keys
         // Should we add support for more keys?
@@ -146,7 +149,7 @@ class EditorKeyEventHandler {
             case KeyEvent.KEYCODE_DPAD_RIGHT:
             case KeyEvent.KEYCODE_MOVE_HOME:
             case KeyEvent.KEYCODE_MOVE_END:
-                final var cursor = editor.getCursor();
+                final Cursor cursor = editor.getCursor();
                 if (isShiftPressed && (!cursor.isSelected())) {
                     editor.selectionAnchor = cursor.left();
                 } else if (!isShiftPressed && editor.selectionAnchor != null) {
@@ -171,10 +174,10 @@ class EditorKeyEventHandler {
                                    boolean isAltPressed,
                                    boolean isCtrlPressed
     ) {
-        final var connection = editor.inputConnection;
-        final var editorCursor = editor.getCursor();
-        final var editorText = editor.getText();
-        final var completionWindow = editor.getComponent(EditorAutoCompletion.class);
+        final EditorInputConnection connection = editor.inputConnection;
+        final Cursor editorCursor = editor.getCursor();
+        final Content editorText = editor.getText();
+        final EditorAutoCompletion completionWindow = editor.getComponent(EditorAutoCompletion.class);
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK: {
                 if (editorCursor.isSelected()) {
@@ -202,23 +205,23 @@ class EditorKeyEventHandler {
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 if (isCtrlPressed) {
                     if (isShiftPressed) {
-                        final var left = editorCursor.left();
-                        final var right = editorCursor.right();
-                        final var lines = editorText.getLineCount();
+                        final CharPosition left = editorCursor.left();
+                        final CharPosition right = editorCursor.right();
+                        final int lines = editorText.getLineCount();
                         if (right.line == lines - 1) {
                             // last line, cannot move down
                             return editorKeyEvent.result(true);
                         }
 
-                        final var next = editorText.getLine(right.line + 1).toString();
+                        final String next = editorText.getLine(right.line + 1).toString();
                         editorText.beginBatchEdit();
                         editorText.delete(right.line, editorText.getColumnCount(right.line), right.line + 1, next.length());
                         editorText.insert(left.line, 0, next.concat(editor.getLineSeparator().getContent()));
                         editorText.endBatchEdit();
 
                         // Update selection
-                        final var newLeft = new CharPosition(left.line + 1, left.column);
-                        final var newRight = new CharPosition(right.line + 1, right.column);
+                        final CharPosition newLeft = new CharPosition(left.line + 1, left.column);
+                        final CharPosition newRight = new CharPosition(right.line + 1, right.column);
                         if (left.index != right.index) {
                             editor.setSelectionRegion(newLeft.line, newLeft.column, newRight.line, newRight.column);
                             if (editor.selectionAnchor.equals(left)) {
@@ -232,7 +235,7 @@ class EditorKeyEventHandler {
 
                         return editorKeyEvent.result(true);
                     }
-                    final var dy = editor.getOffsetY() + editor.getRowHeight() > editor.getScrollMaxY()
+                    final int dy = editor.getOffsetY() + editor.getRowHeight() > editor.getScrollMaxY()
                             ? editor.getScrollMaxY() - editor.getOffsetY()
                             : editor.getRowHeight();
                     editor.getScroller().startScroll(editor.getOffsetX(), editor.getOffsetY(), 0, dy, 0);
@@ -243,23 +246,23 @@ class EditorKeyEventHandler {
             case KeyEvent.KEYCODE_DPAD_UP:
                 if (isCtrlPressed) {
                     if (isShiftPressed) {
-                        final var left = editorCursor.left();
-                        final var right = editorCursor.right();
-                        final var lines = editorText.getLineCount();
+                        final CharPosition left = editorCursor.left();
+                        final CharPosition right = editorCursor.right();
+                        final int lines = editorText.getLineCount();
                         if (left.line == 0) {
                             // first line, cannot move up
                             return editorKeyEvent.result(true);
                         }
 
-                        final var prev = editorText.getLine(left.line - 1).toString();
+                        final String prev = editorText.getLine(left.line - 1).toString();
                         editorText.beginBatchEdit();
                         editorText.delete(left.line - 1, 0, left.line, 0);
                         editorText.insert(right.line - 1, editorText.getColumnCount(right.line - 1), editor.getLineSeparator().getContent().concat(prev));
                         editorText.endBatchEdit();
 
                         // Update selection
-                        final var newLeft = new CharPosition(left.line - 1, left.column);
-                        final var newRight = new CharPosition(right.line - 1, right.column);
+                        final CharPosition newLeft = new CharPosition(left.line - 1, left.column);
+                        final CharPosition newRight = new CharPosition(right.line - 1, right.column);
                         if (left.index != right.index) {
                             editor.setSelectionRegion(newLeft.line, newLeft.column, newRight.line, newRight.column);
                             if (editor.selectionAnchor.equals(left)) {
@@ -276,7 +279,7 @@ class EditorKeyEventHandler {
                     if (editor.getOffsetY() == 0) {
                         return editorKeyEvent.result(true);
                     }
-                    var dy = -editor.getRowHeight();
+                    int dy = -editor.getRowHeight();
                     if (editor.getOffsetY() - editor.getRowHeight() < 0) {
                         dy = -editor.getOffsetY();
                     }
@@ -287,8 +290,8 @@ class EditorKeyEventHandler {
                 return editorKeyEvent.result(true);
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 if (isCtrlPressed) {
-                    final var handle = editorCursor.left().equals(editor.selectionAnchor) ? editorCursor.right() : editorCursor.left();
-                    final var prevStart = Chars.prevWordStart(handle, editorText);
+                    final CharPosition handle = editorCursor.left().equals(editor.selectionAnchor) ? editorCursor.right() : editorCursor.left();
+                    final CharPosition prevStart = Chars.prevWordStart(handle, editorText);
                     if (editor.selectionAnchor != null) {
                         editor.setSelectionRegion(editor.selectionAnchor.line, editor.selectionAnchor.column, prevStart.line, prevStart.column);
                         editor.ensureSelectingTargetVisible();
@@ -301,8 +304,8 @@ class EditorKeyEventHandler {
                 return editorKeyEvent.result(true);
             case KeyEvent.KEYCODE_DPAD_RIGHT:
                 if (isCtrlPressed) {
-                    final var handle = editorCursor.left().equals(editor.selectionAnchor) ? editorCursor.right() : editorCursor.left();
-                    final var nextEnd = Chars.nextWordEnd(handle, editorText);
+                    final CharPosition handle = editorCursor.left().equals(editor.selectionAnchor) ? editorCursor.right() : editorCursor.left();
+                    final CharPosition nextEnd = Chars.nextWordEnd(handle, editorText);
                     if (editor.selectionAnchor != null) {
                         editor.setSelectionRegion(editor.selectionAnchor.line, editor.selectionAnchor.column, nextEnd.line, nextEnd.column);
                         editor.ensureSelectingTargetVisible();
@@ -314,8 +317,8 @@ class EditorKeyEventHandler {
                 editor.moveSelectionRight();
                 return editorKeyEvent.result(true);
             case KeyEvent.KEYCODE_MOVE_END:
-                final var lastLine = editorText.getLineCount() - 1;
-                final var lastColumn = editorText.getColumnCount(lastLine);
+                final int lastLine = editorText.getLineCount() - 1;
+                final int lastColumn = editorText.getColumnCount(lastLine);
                 if (isCtrlPressed) {
                     if (editor.selectionAnchor != null) {
                         editor.setSelectionRegion(editor.selectionAnchor.line, editor.selectionAnchor.column, lastLine, lastColumn);
@@ -376,7 +379,7 @@ class EditorKeyEventHandler {
                 return editorKeyEvent.result(true);
             case KeyEvent.KEYCODE_ESCAPE:
                 if (editorCursor.isSelected()) {
-                    final var newPosition = editor.getProps().positionOfCursorWhenExitSelecting ? editorCursor.right() : editorCursor.left();
+                    final CharPosition newPosition = editor.getProps().positionOfCursorWhenExitSelecting ? editorCursor.right() : editorCursor.left();
                     editor.setSelection(newPosition.line, newPosition.column, true);
                 }
                 return editorKeyEvent.result(true);
@@ -397,15 +400,15 @@ class EditorKeyEventHandler {
             KeyEvent event,
             EditorKeyEvent editorKeyEvent,
             int keyCode) {
-        final var editorText = this.editor.getText();
-        final var editorCursor = this.editor.getCursor();
+        final Content editorText = this.editor.getText();
+        final Cursor editorCursor = this.editor.getCursor();
         if (event.isPrintingKey() && editor.isEditable()) {
             String text = new String(Character.toChars(event.getUnicodeChar(event.getMetaState())));
             // replace text
             SymbolPairMatch.SymbolPair pair = null;
             if (editor.getProps().symbolPairAutoCompletion) {
 
-                var firstCharFromText = text.charAt(0);
+                char firstCharFromText = text.charAt(0);
 
                 char[] inputText = null;
 
@@ -447,7 +450,7 @@ class EditorKeyEventHandler {
                 } else {
                     editorText.beginBatchEdit();
 
-                    var insertPosition = editorText
+                    CharPosition insertPosition = editorText
                             .getIndexer()
                             .getCharPosition(pair.getInsertOffset());
 
@@ -455,7 +458,7 @@ class EditorKeyEventHandler {
                     editorText.insert(insertPosition.line, insertPosition.column + pair.open.length(), pair.close);
                     editorText.endBatchEdit();
 
-                    var cursorPosition = editorText
+                    CharPosition cursorPosition = editorText
                             .getIndexer()
                             .getCharPosition(pair.getCursorOffset());
 
@@ -475,10 +478,10 @@ class EditorKeyEventHandler {
             KeyBindingEvent keybindingEvent,
             int keyCode,
             boolean isShiftPressed) {
-        final var editor = this.editor;
-        final var connection = editor.inputConnection;
-        final var editorText = editor.getText();
-        final var editorCursor = editor.getCursor();
+        final CodeEditor editor = this.editor;
+        final EditorInputConnection connection = editor.inputConnection;
+        final Content editorText = editor.getText();
+        final Cursor editorCursor = editor.getCursor();
         switch (keyCode) {
             case KeyEvent.KEYCODE_V:
                 if (editor.isEditable()) {
@@ -522,7 +525,7 @@ class EditorKeyEventHandler {
                     return keybindingEvent.result(false) || e.result(false);
                 }
 
-                final var line = editorCursor.getLeftLine();
+                final int line = editorCursor.getLeftLine();
                 editor.setSelection(line, editorText.getColumnCount(line));
                 connection.deleteSurroundingText(0, 1);
                 editor.ensureSelectionVisible();
@@ -538,13 +541,13 @@ class EditorKeyEventHandler {
             boolean isShiftPressed,
             boolean isAltPressed,
             boolean isCtrlPressed) {
-        final var editor = this.editor;
-        final var editorCursor = editor.getCursor();
-        final var editorText = editor.getText();
-        final var completionWindow = editor.getComponent(EditorAutoCompletion.class);
+        final CodeEditor editor = this.editor;
+        final Cursor editorCursor = editor.getCursor();
+        final Content editorText = editor.getText();
+        final EditorAutoCompletion completionWindow = editor.getComponent(EditorAutoCompletion.class);
         if (editor.isEditable()) {
-            var lineSeparator = editor.getLineSeparator().getContent();
-            final var editorLanguage = editor.getEditorLanguage();
+            String lineSeparator = editor.getLineSeparator().getContent();
+            final Language editorLanguage = editor.getEditorLanguage();
             if (completionWindow.isShowing() && completionWindow.select()) {
                 return true;
             }
@@ -557,7 +560,7 @@ class EditorKeyEventHandler {
             if (isCtrlPressed && !isShiftPressed) {
                 if (isAltPressed) {
                     // Ctrl + Alt + Enter
-                    var line = editorCursor.left().line;
+                    int line = editorCursor.left().line;
                     if (line == 0) {
                         editorText.insert(0, 0, lineSeparator);
                         editor.setSelection(0, 0);
@@ -571,7 +574,7 @@ class EditorKeyEventHandler {
                 }
 
                 // Ctrl + Enter
-                final var left = editorCursor.left().fromThis();
+                final CharPosition left = editorCursor.left().fromThis();
                 editor.commitText(lineSeparator);
                 editor.setSelection(left.line, left.column);
                 editor.ensureSelectionVisible();
@@ -587,12 +590,12 @@ class EditorKeyEventHandler {
                     if (handler != null) {
                         if (handler.matchesRequirement(editorText, editorCursor.left(), editor.getStyles())) {
                             try {
-                                var result = handler.handleNewline(editorText, editorCursor.left(), editor.getStyles(), editor.getTabWidth());
+                                NewlineHandleResult result = handler.handleNewline(editorText, editorCursor.left(), editor.getStyles(), editor.getTabWidth());
                                 editor.commitText(result.text, false);
                                 int delta = result.shiftLeft;
                                 if (delta != 0) {
                                     int newSel = Math.max(editorCursor.getLeft() - delta, 0);
-                                    var charPosition = editorCursor.getIndexer().getCharPosition(newSel);
+                                    CharPosition charPosition = editorCursor.getIndexer().getCharPosition(newSel);
                                     editor.setSelection(charPosition.line, charPosition.column);
                                 }
                                 consumed = true;
@@ -614,7 +617,7 @@ class EditorKeyEventHandler {
 
     private boolean startNewLIne(CodeEditor editor, Cursor editorCursor, Content
             editorText, EditorKeyEvent e, KeyBindingEvent keybindingEvent) {
-        final var line = editorCursor.right().line;
+        final int line = editorCursor.right().line;
         editor.setSelection(line, editorText.getColumnCount(line));
         editor.commitText(editor.getLineSeparator().getContent());
         editor.ensureSelectionVisible();
@@ -631,16 +634,16 @@ class EditorKeyEventHandler {
     public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
         keyMetaStates.onKeyUp(event);
 
-        final var eventManager = this.editor.eventManager;
-        final var cursor = this.editor.getCursor();
+        final EventManager eventManager = this.editor.eventManager;
+        final Cursor cursor = this.editor.getCursor();
 
-        var e = new EditorKeyEvent(this.editor, event, EditorKeyEvent.Type.UP);
+        EditorKeyEvent e = new EditorKeyEvent(this.editor, event, EditorKeyEvent.Type.UP);
         if ((eventManager.dispatchEvent(e) & InterceptTarget.TARGET_EDITOR) != 0) {
             return e.result(false);
         }
 
         if (isKeyBindingEvent(keyCode, event)) {
-            final var keybindingEvent =
+            final KeyBindingEvent keybindingEvent =
                     new KeyBindingEvent(editor,
                             event,
                             EditorKeyEvent.Type.UP,
@@ -667,8 +670,8 @@ class EditorKeyEventHandler {
      * @return <code>true</code> if the event was handled, <code>false</code> otherwise.
      */
     public boolean onKeyMultiple(int keyCode, int repeatCount, @NonNull KeyEvent event) {
-        final var e = new EditorKeyEvent(this.editor, event, EditorKeyEvent.Type.MULTIPLE);
-        final var eventManager = this.editor.eventManager;
+        final EditorKeyEvent e = new EditorKeyEvent(this.editor, event, EditorKeyEvent.Type.MULTIPLE);
+        final EventManager eventManager = this.editor.eventManager;
         if ((eventManager.dispatchEvent(e) & InterceptTarget.TARGET_EDITOR) != 0) {
             return e.result(false);
         }

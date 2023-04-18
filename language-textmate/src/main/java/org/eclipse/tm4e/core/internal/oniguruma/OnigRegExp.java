@@ -69,7 +69,7 @@ public final class OnigRegExp {
 			return search(str.bytesUTF8, startPosition, str.bytesCount);
 		}
 		synchronized (this) {
-			final var lastSearchResult0 = this.lastSearchResult;
+			final @Nullable OnigResult lastSearchResult0 = this.lastSearchResult;
 			if (lastSearchString == str
 					&& lastSearchPosition <= startPosition
 					&& (lastSearchResult0 == null || lastSearchResult0.locationAt(0) >= startPosition)) {
@@ -77,7 +77,7 @@ public final class OnigRegExp {
 			}
 		}
 
-		var result = search(str.bytesUTF8, startPosition, str.bytesCount);
+		@Nullable OnigResult result = search(str.bytesUTF8, startPosition, str.bytesCount);
 		synchronized (this) {
 			lastSearchString = str;
 			lastSearchPosition = startPosition;

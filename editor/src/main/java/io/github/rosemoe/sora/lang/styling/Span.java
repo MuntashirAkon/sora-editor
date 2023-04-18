@@ -120,7 +120,7 @@ public class Span {
      * Make a copy of this span
      */
     public Span copy() {
-        var copy = obtain(column, style);
+        Span copy = obtain(column, style);
         copy.setUnderlineColor(underlineColor);
         return copy;
     }
@@ -152,7 +152,7 @@ public class Span {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        var span = (Span) o;
+        Span span = (Span) o;
         return column == span.column && style == span.style && underlineColor == span.underlineColor;
     }
 

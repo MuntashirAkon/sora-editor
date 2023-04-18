@@ -70,7 +70,7 @@ public class DefaultLanguageClient implements LanguageClient {
 
     @Override
     public CompletableFuture<List<WorkspaceFolder>> workspaceFolders() {
-        var workSpaceFolder = new WorkspaceFolder();
+        WorkspaceFolder workSpaceFolder = new WorkspaceFolder();
         workSpaceFolder.setUri(URIUtils.fileToURI(context.getProjectPath()).toString());
         // Always return the current project path
         return CompletableFuture.completedFuture(List.of(workSpaceFolder));

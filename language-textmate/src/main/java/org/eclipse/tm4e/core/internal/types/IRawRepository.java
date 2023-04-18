@@ -28,8 +28,8 @@ import org.eclipse.tm4e.core.internal.parser.PropertySettable;
 public interface IRawRepository {
 
 	static IRawRepository merge(@Nullable final IRawRepository... sources) {
-		final var merged = new RawRepository();
-		for (final var source : sources) {
+		final RawRepository merged = new RawRepository();
+		for (final @Nullable IRawRepository source : sources) {
 			if (source == null)
 				continue;
 			source.putEntries(merged);

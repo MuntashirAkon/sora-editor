@@ -57,7 +57,7 @@ public final class MatchRule extends Rule {
 	}
 
 	private RegExpSourceList getCachedCompiledPatterns(final IRuleRegistry grammar) {
-		var cachedCompiledPatterns = this.cachedCompiledPatterns;
+		@Nullable RegExpSourceList cachedCompiledPatterns = this.cachedCompiledPatterns;
 		if (cachedCompiledPatterns == null) {
 			cachedCompiledPatterns = new RegExpSourceList();
 			this.collectPatterns(grammar, cachedCompiledPatterns);

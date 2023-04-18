@@ -23,13 +23,13 @@ public final class MoreCollections {
 
 	@SafeVarargs
 	public static <T> List<T> asArrayList(final T... items) {
-		final var list = new ArrayList<T>();
+		final ArrayList<T> list = new ArrayList<T>();
 		Collections.addAll(list, items);
 		return list;
 	}
 
 	public static <T> List<T> asArrayList(final T firstItem, final List<T> moreItems) {
-		final var list = new ArrayList<T>();
+		final ArrayList<T> list = new ArrayList<T>();
 		list.add(firstItem);
 		list.addAll(moreItems);
 		return list;

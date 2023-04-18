@@ -57,7 +57,7 @@ public final class ColorMap {
         if (_color == null) {
             return 0;
         }
-        final var color = _color.toUpperCase(Locale.ROOT);
+        final String color = _color.toUpperCase(Locale.ROOT);
         Integer value = _color2id.get(color);
         if (value != null) {
             return value;

@@ -26,6 +26,7 @@ package io.github.rosemoe.sora.event;
 import androidx.annotation.NonNull;
 
 import io.github.rosemoe.sora.text.CharPosition;
+import io.github.rosemoe.sora.text.Cursor;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.EditorSearcher;
 
@@ -72,7 +73,7 @@ public class SelectionChangeEvent extends Event {
 
     public SelectionChangeEvent(@NonNull CodeEditor editor, int cause) {
         super(editor);
-        var cursor = editor.getText().getCursor();
+        Cursor cursor = editor.getText().getCursor();
         left = cursor.left();
         right = cursor.right();
         this.cause = cause;

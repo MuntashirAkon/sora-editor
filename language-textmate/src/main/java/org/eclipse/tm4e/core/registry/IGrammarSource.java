@@ -35,7 +35,7 @@ public interface IGrammarSource {
         XML
     }
 
-    private static ContentType guessFileFormat(final String fileName) {
+    static ContentType guessFileFormat(final String fileName) {
         final String extension = fileName.substring(fileName.lastIndexOf('.') + 1).trim().toLowerCase();
 
         switch (extension) {
@@ -64,8 +64,8 @@ public interface IGrammarSource {
     static IGrammarSource fromFile(final File file, @Nullable final ContentType contentType,
                                    @Nullable final Charset charset) {
 
-        final var filePath = file.getAbsolutePath();
-        final var contentType1 = contentType == null ? guessFileFormat(filePath) : contentType;
+        final String filePath = file.getAbsolutePath();
+        final ContentType contentType1 = contentType == null ? guessFileFormat(filePath) : contentType;
         return new IGrammarSource() {
 
 
@@ -88,13 +88,13 @@ public interface IGrammarSource {
 
     static IGrammarSource fromInputStream(InputStream stream, @Nullable final String fileName, @Nullable final Charset charset) {
 
-        final var contentType1 = guessFileFormat(fileName);
+        final ContentType contentType1 = guessFileFormat(fileName);
 
-        try (var reader = new BufferedReader(new InputStreamReader(stream, charset == null ? StandardCharsets.UTF_8 : charset))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset == null ? StandardCharsets.UTF_8 : charset))) {
 
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
-            var buffer = new char[8192 * 2];
+            char[] buffer = new char[8192 * 2];
             int count;
             while ((count = reader.read(buffer)) != -1) {
                 if (count > 0) {
@@ -138,7 +138,7 @@ public interface IGrammarSource {
     static IGrammarSource fromResource(final Class<?> clazz, final String resourceName,
                                        @Nullable final ContentType contentType, @Nullable final Charset charset) {
 
-        final var contentType1 = contentType == null ? guessFileFormat(resourceName) : contentType;
+        final ContentType contentType1 = contentType == null ? guessFileFormat(resourceName) : contentType;
         return new IGrammarSource() {
             @Override
             public Reader getReader() throws IOException {

@@ -54,7 +54,7 @@ public final class RuleFactory {
 			helper.registerRule(ruleId -> {
 				desc.setId(ruleId);
 
-				final var ruleMatch = desc.getMatch();
+				final @Nullable String ruleMatch = desc.getMatch();
 				if (ruleMatch != null) {
 					return new MatchRule(
 						ruleId,
@@ -63,12 +63,12 @@ public final class RuleFactory {
 						_compileCaptures(desc.getCaptures(), helper, repository));
 				}
 
-				final var begin = desc.getBegin();
+				final @Nullable String begin = desc.getBegin();
 				if (begin == null) {
-					final var repository1 = desc.getRepository() == null
+					final IRawRepository repository1 = desc.getRepository() == null
 						? repository
 						: IRawRepository.merge(repository, desc.getRepository());
-					var patterns = desc.getPatterns();
+					@Nullable Collection<IRawRule> patterns = desc.getPatterns();
 					if (patterns == null && desc.getInclude() != null) {
 						patterns = List.of(new RawRule().setInclude(desc.getInclude()));
 					}
@@ -123,7 +123,7 @@ public final class RuleFactory {
 		}
 
 		// Initialize result
-		final var r = new ArrayList<@Nullable CaptureRule>();
+		final ArrayList<@Nullable CaptureRule> r = new ArrayList<@Nullable CaptureRule>();
 		for (int i = 0; i <= maximumCaptureId; i++) {
 			r.add(null);
 		}
@@ -155,13 +155,13 @@ public final class RuleFactory {
 			return new CompilePatternsResult(new RuleId[0], false);
 		}
 
-		final var r = new ArrayList<RuleId>();
+		final ArrayList<RuleId> r = new ArrayList<RuleId>();
 		for (final IRawRule pattern : patterns) {
 			RuleId ruleId = null;
-			final var patternInclude = pattern.getInclude();
+			final @Nullable String patternInclude = pattern.getInclude();
 			if (patternInclude != null) {
 
-				final var reference = IncludeReference.parseInclude(patternInclude);
+				final IncludeReference reference = IncludeReference.parseInclude(patternInclude);
 				switch (reference.kind) {
 				case Base:
 					ruleId = getCompiledRuleId(repository.getBase(), helper, repository);
@@ -172,7 +172,7 @@ public final class RuleFactory {
 
 				case RelativeReference:
 					// Local include found in `repository`
-					final var localIncludedRule = repository.getRule(reference.ruleName);
+					final @Nullable IRawRule localIncludedRule = repository.getRule(reference.ruleName);
 					if (localIncludedRule != null) {
 						ruleId = getCompiledRuleId(localIncludedRule, helper, repository);
 					} else {
@@ -184,7 +184,7 @@ public final class RuleFactory {
 				case TopLevelReference:
 				case TopLevelRepositoryReference:
 
-					final var externalGrammarName = reference.scopeName;
+					final String externalGrammarName = reference.scopeName;
 
 					@Nullable
 					final String externalGrammarInclude = reference.kind == IncludeReference.Kind.TopLevelRepositoryReference
@@ -192,12 +192,12 @@ public final class RuleFactory {
 						: null;
 
 					// External include
-					final var externalGrammar = helper.getExternalGrammar(externalGrammarName, repository);
+					final org.eclipse.tm4e.core.internal.types.@Nullable IRawGrammar externalGrammar = helper.getExternalGrammar(externalGrammarName, repository);
 
 					if (externalGrammar != null) {
-						final var externalGrammarRepo = externalGrammar.getRepository();
+						final IRawRepository externalGrammarRepo = externalGrammar.getRepository();
 						if (externalGrammarInclude != null) {
-							final var externalIncludedRule = externalGrammarRepo.getRule(externalGrammarInclude);
+							final @Nullable IRawRule externalIncludedRule = externalGrammarRepo.getRule(externalGrammarInclude);
 							if (externalIncludedRule != null) {
 								ruleId = getCompiledRuleId(externalIncludedRule, helper, externalGrammarRepo);
 							} else {
@@ -233,17 +233,17 @@ public final class RuleFactory {
 				boolean skipRule = false;
 
 				if (rule instanceof IncludeOnlyRule) {
-					var ior = (IncludeOnlyRule) rule;
+					IncludeOnlyRule ior = (IncludeOnlyRule) rule;
 					if (ior.hasMissingPatterns && ior.patterns.length == 0) {
 						skipRule = true;
 					}
 				} else if (rule instanceof  BeginEndRule ) {
-					var ber = (BeginEndRule) rule;
+					BeginEndRule ber = (BeginEndRule) rule;
 					if (ber.hasMissingPatterns && ber.patterns.length == 0) {
 						skipRule = true;
 					}
 				} else if (rule instanceof  BeginWhileRule) {
-					var bwr = (BeginWhileRule) rule;
+					BeginWhileRule bwr = (BeginWhileRule) rule;
 					if (bwr.hasMissingPatterns && bwr.patterns.length == 0) {
 						skipRule = true;
 					}

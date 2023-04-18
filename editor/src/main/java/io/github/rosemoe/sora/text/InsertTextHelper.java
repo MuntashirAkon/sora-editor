@@ -37,7 +37,7 @@ class InsertTextHelper {
     private synchronized static InsertTextHelper obtain() {
         for (int i = 0; i < sCached.length; i++) {
             if (sCached[i] != null) {
-                var cache = sCached[i];
+                InsertTextHelper cache = sCached[i];
                 sCached[i] = null;
                 return cache;
             }
@@ -46,7 +46,7 @@ class InsertTextHelper {
     }
 
     public static InsertTextHelper forInsertion(@NonNull CharSequence text) {
-        var o = obtain();
+        InsertTextHelper o = obtain();
         o.init(text);
         return o;
     }

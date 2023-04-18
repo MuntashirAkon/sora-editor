@@ -96,7 +96,7 @@ public class EditorScroller {
     }
 
     public boolean computeScrollOffset() {
-        var computed = scroller.computeScrollOffset();
+        boolean computed = scroller.computeScrollOffset();
         if (computed) {
             setEditorOffsets();
         }

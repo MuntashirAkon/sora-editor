@@ -77,13 +77,13 @@ public final class Theme {
         if (scopePath == null) {
             return this._defaults;
         }
-        final var scopeName = scopePath.scopeName;
+        final String scopeName = scopePath.scopeName;
 
-        final var matchingTrieElements = this._cachedMatchRoot.computeIfAbsent(
+        final List<ThemeTrieElementRule> matchingTrieElements = this._cachedMatchRoot.computeIfAbsent(
                 scopeName,
                 k -> this._root.match(k));
 
-        final var effectiveRule = findFirstMatching(matchingTrieElements,
+        final @Nullable ThemeTrieElementRule effectiveRule = findFirstMatching(matchingTrieElements,
                 v -> _scopePathMatchesParentScopes(scopePath.parent, v.parentScopes));
         if (effectiveRule == null) {
             return null;
@@ -101,8 +101,8 @@ public final class Theme {
             return true;
         }
 
-        var index = 0;
-        var scopePattern = parentScopeNames.get(index);
+        int index = 0;
+        String scopePattern = parentScopeNames.get(index);
 
         while (scopePath != null) {
             if (_matchesScope(scopePath.scopeName, scopePattern)) {
@@ -131,7 +131,7 @@ public final class Theme {
             return Collections.emptyList();
         }
 
-         var settings = source.getSettings();
+        @Nullable Collection<IRawThemeSetting> settings = source.getSettings();
         if (settings == null) {
             //dingyi change: adapted vscode theme
             settings = (Collection<IRawThemeSetting>) ( (ThemeRaw) source).get("tokenColors");
@@ -140,10 +140,10 @@ public final class Theme {
             //return Collections.emptyList();
         }
 
-        final var result = new ArrayList<ParsedThemeRule>();
+        final ArrayList<ParsedThemeRule> result = new ArrayList<ParsedThemeRule>();
         int i = -1;
         for (final IRawThemeSetting entry : settings) {
-            final var entrySetting = entry.getSetting();
+            final @Nullable IThemeSetting entrySetting = entry.getSetting();
             if (entrySetting == null) {
                 continue;
             }
@@ -154,7 +154,7 @@ public final class Theme {
             List<String> scopes;
             if (settingScope instanceof String) {
 
-                var _scope = (String) settingScope;
+                String _scope = (String) settingScope;
 
                 // remove leading commas
                 _scope = _scope.replaceAll("^[,]+", "");
@@ -164,20 +164,20 @@ public final class Theme {
 
                 scopes = BY_COMMA_SPLITTER.splitToList(_scope);
             } else if (settingScope instanceof List) {
-                @SuppressWarnings("unchecked") final var settingScopes = (List<String>) settingScope;
+                @SuppressWarnings("unchecked") final List<String> settingScopes = (List<String>) settingScope;
                 scopes = settingScopes;
             } else {
                 scopes = List.of("");
             }
 
             int fontStyle = FontStyle.NotSet;
-            final var settingsFontStyle = entrySetting.getFontStyle();
+            final @Nullable Object settingsFontStyle = entrySetting.getFontStyle();
             if (settingsFontStyle instanceof String) {
-                final var style = (String) settingsFontStyle;
+                final String style = (String) settingsFontStyle;
                 fontStyle = FontStyle.None;
 
-                final var segments = BY_SPACE_SPLITTER.split(style);
-                for (final var segment : segments) {
+                final Iterable<String> segments = BY_SPACE_SPLITTER.split(style);
+                for (final String segment : segments) {
                     switch (segment) {
                         case "italic":
                             fontStyle = fontStyle | FontStyle.Italic;
@@ -210,11 +210,11 @@ public final class Theme {
             }
 
             for (int j = 0, lenJ = scopes.size(); j < lenJ; j++) {
-                final var _scope = scopes.get(j).trim();
+                final String _scope = scopes.get(j).trim();
 
-                final var segments = BY_SPACE_SPLITTER.splitToList(_scope);
+                final List<String> segments = BY_SPACE_SPLITTER.splitToList(_scope);
 
-                final var scope = getLastElement(segments);
+                final String scope = getLastElement(segments);
                 List<String> parentScopes = null;
                 if (segments.size() > 1) {
                     parentScopes = segments.subList(0, segments.size() - 1);
@@ -241,7 +241,7 @@ public final class Theme {
                                                 @Nullable final List<String> _colorMap) {
 
         // copy the list since we cannot be sure the given list is mutable
-        final var parsedThemeRules = new ArrayList<>(_parsedThemeRules);
+        final ArrayList<ParsedThemeRule> parsedThemeRules = new ArrayList<>(_parsedThemeRules);
 
         // Sort rules lexicographically, and then by index if necessary
         Collections.sort(parsedThemeRules, (a, b) -> {
@@ -261,7 +261,7 @@ public final class Theme {
         String defaultForeground = "#000000";
         String defaultBackground = "#ffffff";
         while (!parsedThemeRules.isEmpty() && parsedThemeRules.get(0).scope.isEmpty()) {
-            final var incomingDefaults = parsedThemeRules.remove(0);
+            final ParsedThemeRule incomingDefaults = parsedThemeRules.remove(0);
             if (incomingDefaults.fontStyle != FontStyle.NotSet) {
                 defaultFontStyle = incomingDefaults.fontStyle;
             }
@@ -272,14 +272,14 @@ public final class Theme {
                 defaultBackground = incomingDefaults.background;
             }
         }
-        final var colorMap = new ColorMap(_colorMap);
-       final var defaults = new StyleAttributes(defaultFontStyle, colorMap.getId(defaultForeground),
+        final ColorMap colorMap = new ColorMap(_colorMap);
+        final StyleAttributes defaults = new StyleAttributes(defaultFontStyle, colorMap.getId(defaultForeground),
                 colorMap.getId(defaultBackground));
 
-        final var root = new ThemeTrieElement(new ThemeTrieElementRule(0, null, FontStyle.NotSet, 0, 0),
+        final ThemeTrieElement root = new ThemeTrieElement(new ThemeTrieElementRule(0, null, FontStyle.NotSet, 0, 0),
                 Collections.emptyList());
         for (int i = 0, len = parsedThemeRules.size(); i < len; i++) {
-            final var rule = parsedThemeRules.get(i);
+            final ParsedThemeRule rule = parsedThemeRules.get(i);
             root.insert(0, rule.scope, rule.parentScopes, rule.fontStyle, colorMap.getId(rule.foreground),
                     colorMap.getId(rule.background));
         }

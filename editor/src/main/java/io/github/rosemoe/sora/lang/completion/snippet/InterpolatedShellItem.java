@@ -46,7 +46,7 @@ public class InterpolatedShellItem extends SnippetItem {
     @NonNull
     @Override
     public InterpolatedShellItem clone() {
-        var n = new InterpolatedShellItem(shellCode, getStartIndex());
+        InterpolatedShellItem n = new InterpolatedShellItem(shellCode, getStartIndex());
         n.setIndex(getStartIndex(), getEndIndex());
         return n;
     }

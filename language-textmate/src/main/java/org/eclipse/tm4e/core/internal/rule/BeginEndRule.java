@@ -90,12 +90,12 @@ public final class BeginEndRule extends Rule {
 
 	private RegExpSourceList getCachedCompiledPatterns(final IRuleRegistry grammar,
 		@Nullable final String endRegexSource) {
-		var cachedCompiledPatterns = this.cachedCompiledPatterns;
+		@Nullable RegExpSourceList cachedCompiledPatterns = this.cachedCompiledPatterns;
 		if (cachedCompiledPatterns == null) {
 			cachedCompiledPatterns = new RegExpSourceList();
 
-			for (final var pattern : this.patterns) {
-				final var rule = grammar.getRule(pattern);
+			for (final RuleId pattern : this.patterns) {
+				final Rule rule = grammar.getRule(pattern);
 				rule.collectPatterns(grammar, cachedCompiledPatterns);
 			}
 

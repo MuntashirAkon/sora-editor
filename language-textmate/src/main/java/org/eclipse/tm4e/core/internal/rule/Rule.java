@@ -47,7 +47,7 @@ public abstract class Rule {
 
 	@Nullable
 	public String getName(@Nullable final CharSequence lineText, final OnigCaptureIndex @Nullable [] captureIndices) {
-		final var name = this.name;
+		final @Nullable String name = this.name;
 		if (!nameIsCapturing || name == null || lineText == null || captureIndices == null) {
 			return name;
 		}
@@ -56,7 +56,7 @@ public abstract class Rule {
 
 	@Nullable
 	public String getContentName(final CharSequence lineText, final OnigCaptureIndex[] captureIndices) {
-		final var contentName = this.contentName;
+		final @Nullable String contentName = this.contentName;
 		if (!contentNameIsCapturing || contentName == null) {
 			return contentName;
 		}

@@ -38,12 +38,12 @@ public class StringUtils {
 
     public static int convertUnicodeOffsetToUtf16(String text, int offset, boolean hasSurrogate) {
         if (hasSurrogate) {
-            var j = 0;
+            int j = 0;
             for (int i = 0; i < text.length(); i++) {
                 if (j == offset) {
                     return i;
                 }
-                var ch = text.charAt(i);
+                char ch = text.charAt(i);
                 if (Character.isHighSurrogate(ch) && i + 1 < text.length() && Character.isLowSurrogate(text.charAt(i + 1))) {
                     i++;
                 }

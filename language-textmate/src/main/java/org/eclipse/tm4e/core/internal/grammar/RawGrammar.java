@@ -96,7 +96,7 @@ public class RawGrammar extends HashMap<String, @Nullable Object>
 
 	@Override
 	public IRawRepository getRepository() {
-		var repo = (IRawRepository) get(RawRule.REPOSITORY);
+		IRawRepository repo = (IRawRepository) get(RawRule.REPOSITORY);
 		if (repo == null) {
 			repo = new RawRepository();
 			setRepository(repo);
@@ -106,7 +106,7 @@ public class RawGrammar extends HashMap<String, @Nullable Object>
 
 	private Object getSafe(@Nullable final Object key) {
 		@SuppressWarnings("unlikely-arg-type")
-		final var obj = get(key);
+		final @Nullable Object obj = get(key);
 		if (obj == null) {
 			throw new NoSuchElementException("Key '" + key + "' does not exit for grammar '" + getName() + '"');
 		}

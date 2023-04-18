@@ -31,6 +31,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import io.github.rosemoe.sora.lsp.client.languageserver.requestmanager.RequestManager;
 import io.github.rosemoe.sora.lsp.editor.LspEditor;
 import io.github.rosemoe.sora.lsp.operations.Provider;
 import io.github.rosemoe.sora.lsp.utils.LspUtils;
@@ -58,7 +59,7 @@ public class QueryDocumentDiagnosticsProvider implements Provider<DocumentDiagno
 
     @Override
     public CompletableFuture<Map<String, Either<FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport>>> execute(DocumentDiagnosticParams params) {
-        var manager = editor.getRequestManager();
+        RequestManager manager = editor.getRequestManager();
 
         if (manager == null) {
             return null;

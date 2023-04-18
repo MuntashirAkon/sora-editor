@@ -56,7 +56,7 @@ public abstract class AbstractModelLines {
 			return;
 
 		synchronized (list) {
-			final var firstLine = getOrNull(lineIndex);
+			final @Nullable ModelLine firstLine = getOrNull(lineIndex);
 			for (int i = 0; i < count; i++) {
 				list.add(lineIndex, new ModelLine());
 			}
@@ -108,7 +108,7 @@ public abstract class AbstractModelLines {
 		}
 
 		synchronized (list) {
-			final var firstLine = getOrNull(lineIndex);
+			final @Nullable ModelLine firstLine = getOrNull(lineIndex);
 			linesRemoved = Math.min(linesRemoved, getNumberOfLines() - lineIndex);
 			for (int i = 0; i < linesRemoved; i++) {
 				list.remove(lineIndex);

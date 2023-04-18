@@ -52,7 +52,7 @@ public class LspProviderManager {
      * Add a provider
      */
     public void addProvider(Supplier<Provider<?, ?>> providerSupplier) {
-        var feature = providerSupplier.get();
+        Provider<?, ?> feature = providerSupplier.get();
         addProvider(feature);
     }
 
@@ -76,7 +76,7 @@ public class LspProviderManager {
      * Remove provider
      */
     public void removeProvider(Class<?> providerClass) {
-        for (var feature : supportedProviders) {
+        for (Provider<?, ?> feature : supportedProviders) {
             if (feature.getClass() == providerClass) {
                 feature.dispose(editor);
                 supportedProviders.remove(feature);
@@ -90,7 +90,7 @@ public class LspProviderManager {
      */
     @Nullable
     public <T extends Provider> T useProvider(Class<T> providerClass) {
-        for (var feature : supportedProviders) {
+        for (Provider<?, ?> feature : supportedProviders) {
             if (feature.getClass() == providerClass) {
                 return (T) feature;
             }

@@ -34,14 +34,14 @@ public final class PListParserXML<T> implements PListParser<T> {
 
 	@Override
 	public T parse(final Reader contents) throws IOException, ParserConfigurationException, SAXException {
-		final var spf = SAXParserFactory.newInstance();
+		final SAXParserFactory spf = SAXParserFactory.newInstance();
 		spf.setNamespaceAware(true);
 
 		// make parser invulnerable to XXE attacks, see https://rules.sonarsource.com/java/RSPEC-2755
 		spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
 		spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 
-		final var saxParser = spf.newSAXParser();
+		final javax.xml.parsers.SAXParser saxParser = spf.newSAXParser();
 
 		// make parser invulnerable to XXE attacks, see https://rules.sonarsource.com/java/RSPEC-2755
 		// but not support in android
@@ -51,7 +51,7 @@ public final class PListParserXML<T> implements PListParser<T> {
 		final XMLReader xmlReader = saxParser.getXMLReader();
 		xmlReader.setEntityResolver((publicId, systemId) -> new InputSource(
 			new ByteArrayInputStream("<?xml version='1.0' encoding='UTF-8'?>".getBytes())));
-		final var result = new PListContentHandler<T>(objectFactory);
+		final PListContentHandler<T> result = new PListContentHandler<T>(objectFactory);
 		xmlReader.setContentHandler(result);
 		xmlReader.parse(new InputSource(contents));
 		return result.getResult();

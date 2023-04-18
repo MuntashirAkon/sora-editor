@@ -35,7 +35,8 @@ import java.io.Reader;
  * @deprecated Use {@link ContentIO} class instead
  * @author Rosemoe
  */
-@Deprecated(since = "0.21.1", forRemoval = true)
+//@Deprecated(since = "0.21.1", forRemoval = true)
+@Deprecated
 public class ContentCreator {
 
     /**

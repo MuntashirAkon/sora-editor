@@ -80,7 +80,7 @@ public class Magnifier implements EditorBuiltinComponent {
         popup = new PopupWindow();
         popup.setElevation(view.getDpUnit() * 4);
         @SuppressLint("InflateParams")
-        var view = LayoutInflater.from(editor.getContext()).inflate(R.layout.magnifier_popup, null);
+        View view = LayoutInflater.from(editor.getContext()).inflate(R.layout.magnifier_popup, null);
         image = view.findViewById(R.id.magnifier_image_view);
         popup.setHeight((int) (editor.getDpUnit() * 70));
         popup.setWidth((int) (editor.getDpUnit() * 100));
@@ -180,13 +180,13 @@ public class Magnifier implements EditorBuiltinComponent {
         this.y = y;
         int[] pos = new int[2];
         view.getLocationInWindow(pos);
-        var left = Math.max(pos[0] + x - popup.getWidth() / 2, 0);
-        var right = left + popup.getWidth();
+        int left = Math.max(pos[0] + x - popup.getWidth() / 2, 0);
+        int right = left + popup.getWidth();
         if (right > view.getWidth() + pos[0]) {
             right = view.getWidth() + pos[0];
             left = Math.max(0, right - popup.getWidth());
         }
-        var top = Math.max(pos[1] + y - popup.getHeight() - view.getRowHeight(), 0);
+        int top = Math.max(pos[1] + y - popup.getHeight() - view.getRowHeight(), 0);
         if (popup.isShowing()) {
             popup.update(left, top, popup.getWidth(), popup.getHeight());
         } else {
@@ -237,13 +237,13 @@ public class Magnifier implements EditorBuiltinComponent {
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void updateDisplayOreo(Activity activity) {
-        var requiredWidth = (int) (popup.getWidth() / scaleFactor);
-        var requiredHeight = (int) (popup.getHeight() / scaleFactor);
+        int requiredWidth = (int) (popup.getWidth() / scaleFactor);
+        int requiredHeight = (int) (popup.getHeight() / scaleFactor);
 
-        var left = Math.max(x - requiredWidth / 2, 0);
-        var top = Math.max(y - requiredHeight / 2, 0);
-        var right = Math.min(left + requiredWidth, view.getWidth());
-        var bottom = Math.min(top + requiredHeight, view.getHeight());
+        int left = Math.max(x - requiredWidth / 2, 0);
+        int top = Math.max(y - requiredHeight / 2, 0);
+        int right = Math.min(left + requiredWidth, view.getWidth());
+        int bottom = Math.min(top + requiredHeight, view.getHeight());
         if (right - left < requiredWidth) {
             left = Math.max(0, right - requiredWidth);
         }
@@ -254,19 +254,19 @@ public class Magnifier implements EditorBuiltinComponent {
             dismiss();
             return;
         }
-        var pos = new int[2];
+        int[] pos = new int[2];
         view.getLocationInWindow(pos);
-        final var requestTime = System.currentTimeMillis();
+        final long requestTime = System.currentTimeMillis();
         expectedRequestTime = requestTime;
-        var clip = Bitmap.createBitmap(right - left, bottom - top, Bitmap.Config.ARGB_8888);
+        Bitmap clip = Bitmap.createBitmap(right - left, bottom - top, Bitmap.Config.ARGB_8888);
         try {
-            PixelCopy.request(activity.getWindow(), new Rect(pos[0] + left, pos[1] + top, pos[0] + right, pos[1] + bottom), clip, (var statusCode) -> {
+            PixelCopy.request(activity.getWindow(), new Rect(pos[0] + left, pos[1] + top, pos[0] + right, pos[1] + bottom), clip, (int statusCode) -> {
                 if (requestTime != expectedRequestTime) {
                     return;
                 }
                 if (statusCode == PixelCopy.SUCCESS) {
-                    var dest = Bitmap.createBitmap(popup.getWidth(), popup.getHeight(), Bitmap.Config.ARGB_8888);
-                    var scaled = Bitmap.createScaledBitmap(clip, popup.getWidth(), popup.getHeight(), true);
+                    Bitmap dest = Bitmap.createBitmap(popup.getWidth(), popup.getHeight(), Bitmap.Config.ARGB_8888);
+                    Bitmap scaled = Bitmap.createScaledBitmap(clip, popup.getWidth(), popup.getHeight(), true);
                     clip.recycle();
 
                     Canvas canvas = new Canvas(dest);
@@ -304,14 +304,14 @@ public class Magnifier implements EditorBuiltinComponent {
             dismiss();
             return;
         }
-        var dest = Bitmap.createBitmap(popup.getWidth(), popup.getHeight(), Bitmap.Config.ARGB_8888);
-        var requiredWidth = (int) (popup.getWidth() / scaleFactor);
-        var requiredHeight = (int) (popup.getHeight() / scaleFactor);
+        Bitmap dest = Bitmap.createBitmap(popup.getWidth(), popup.getHeight(), Bitmap.Config.ARGB_8888);
+        int requiredWidth = (int) (popup.getWidth() / scaleFactor);
+        int requiredHeight = (int) (popup.getHeight() / scaleFactor);
 
-        var left = Math.max(x - requiredWidth / 2, 0);
-        var top = Math.max(y - requiredHeight / 2, 0);
-        var right = Math.min(left + requiredWidth, view.getWidth());
-        var bottom = Math.min(top + requiredHeight, view.getHeight());
+        int left = Math.max(x - requiredWidth / 2, 0);
+        int top = Math.max(y - requiredHeight / 2, 0);
+        int right = Math.min(left + requiredWidth, view.getWidth());
+        int bottom = Math.min(top + requiredHeight, view.getHeight());
         if (right - left < requiredWidth) {
             left = Math.max(0, right - requiredWidth);
         }
@@ -323,11 +323,11 @@ public class Magnifier implements EditorBuiltinComponent {
             dest.recycle();
             return;
         }
-        var clip = Bitmap.createBitmap(requiredWidth, requiredHeight, Bitmap.Config.ARGB_8888);
-        var viewCanvas = new Canvas(clip);
+        Bitmap clip = Bitmap.createBitmap(requiredWidth, requiredHeight, Bitmap.Config.ARGB_8888);
+        Canvas viewCanvas = new Canvas(clip);
         viewCanvas.translate(-left, -top);
         view.draw(viewCanvas);
-        var scaled = Bitmap.createScaledBitmap(clip, popup.getWidth(), popup.getHeight(), true);
+        Bitmap scaled = Bitmap.createScaledBitmap(clip, popup.getWidth(), popup.getHeight(), true);
         clip.recycle();
 
         Canvas canvas = new Canvas(dest);

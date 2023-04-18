@@ -37,11 +37,11 @@ public final class AttributedScopeStack {
 
 	public static AttributedScopeStack createRootAndLookUpScopeName(final String scopeName,
 		final int encodedTokenAttributes, final Grammar grammar) {
-		final var rawRootMetadata = grammar.getMetadataForScope(scopeName);
-		final var scopePath = new ScopeStack(null, scopeName);
-		final var rootStyle = grammar.themeProvider.themeMatch(scopePath);
+		final BasicScopeAttributes rawRootMetadata = grammar.getMetadataForScope(scopeName);
+		final ScopeStack scopePath = new ScopeStack(null, scopeName);
+		final @Nullable StyleAttributes rootStyle = grammar.themeProvider.themeMatch(scopePath);
 
-		final var resolvedTokenAttributes = AttributedScopeStack.mergeAttributes(
+		final int resolvedTokenAttributes = AttributedScopeStack.mergeAttributes(
 			encodedTokenAttributes,
 			rawRootMetadata,
 			rootStyle);
@@ -103,9 +103,9 @@ public final class AttributedScopeStack {
 		final int existingTokenAttributes,
 		final BasicScopeAttributes basicScopeAttributes,
 		@Nullable final StyleAttributes styleAttributes) {
-		var fontStyle = FontStyle.NotSet;
-		var foreground = 0;
-		var background = 0;
+		int fontStyle = FontStyle.NotSet;
+		int foreground = 0;
+		int background = 0;
 
 		if (styleAttributes != null) {
 			fontStyle = styleAttributes.fontStyle;
@@ -133,9 +133,9 @@ public final class AttributedScopeStack {
 			return _pushAttributed(this, scopePath, grammar);
 		}
 
-		final var scopes = BY_SPACE_SPLITTER.split(scopePath);
-		var result = this;
-		for (final var scope : scopes) {
+		final Iterable<String> scopes = BY_SPACE_SPLITTER.split(scopePath);
+		AttributedScopeStack result = this;
+		for (final String scope : scopes) {
 			result = _pushAttributed(result, scope, grammar);
 		}
 		return result;
@@ -145,11 +145,11 @@ public final class AttributedScopeStack {
 		final AttributedScopeStack target,
 		final String scopeName,
 		final Grammar grammar) {
-		final var rawMetadata = grammar.getMetadataForScope(scopeName);
+		final BasicScopeAttributes rawMetadata = grammar.getMetadataForScope(scopeName);
 
-		final var newPath = target.scopePath.push(scopeName);
-		final var scopeThemeMatchResult = grammar.themeProvider.themeMatch(newPath);
-		final var metadata = mergeAttributes(
+		final ScopeStack newPath = target.scopePath.push(scopeName);
+		final @Nullable StyleAttributes scopeThemeMatchResult = grammar.themeProvider.themeMatch(newPath);
+		final int metadata = mergeAttributes(
 			target.tokenAttributes,
 			rawMetadata,
 			scopeThemeMatchResult);

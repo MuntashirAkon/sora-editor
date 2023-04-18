@@ -23,9 +23,12 @@
  */
 package io.github.rosemoe.sora.langs.textmate;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tm4e.core.internal.grammar.tokenattrs.EncodedTokenAttributes;
 import org.eclipse.tm4e.core.internal.grammar.tokenattrs.StandardTokenType;
+import org.eclipse.tm4e.languageconfiguration.model.AutoClosingPair;
 import org.eclipse.tm4e.languageconfiguration.model.AutoClosingPairConditional;
+import org.eclipse.tm4e.languageconfiguration.model.LanguageConfiguration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +40,7 @@ import java.util.Set;
 import io.github.rosemoe.sora.lang.styling.Span;
 import io.github.rosemoe.sora.text.Content;
 import io.github.rosemoe.sora.text.ContentLine;
+import io.github.rosemoe.sora.text.Cursor;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.SymbolPairMatch;
 
@@ -73,7 +77,7 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
             return;
         }
 
-        var languageConfiguration = language.languageConfiguration;
+        LanguageConfiguration languageConfiguration = language.languageConfiguration;
 
         if (languageConfiguration == null) {
             return;
@@ -82,11 +86,11 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
         removeAllPairs();
 
 
-        var surroundingPairs = languageConfiguration.getSurroundingPairs();
+        @Nullable List<AutoClosingPair> surroundingPairs = languageConfiguration.getSurroundingPairs();
 
-        var autoClosingPairs = languageConfiguration.getAutoClosingPairs();
+        @Nullable List<AutoClosingPairConditional> autoClosingPairs = languageConfiguration.getAutoClosingPairs();
 
-        var mergePairs = new ArrayList<AutoClosingPairConditional>();
+        ArrayList<AutoClosingPairConditional> mergePairs = new ArrayList<AutoClosingPairConditional>();
 
         if (autoClosingPairs != null) {
             mergePairs.addAll(autoClosingPairs);
@@ -95,15 +99,15 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
 
         if (surroundingPairs != null) {
 
-            for (var surroundingPair : surroundingPairs) {
+            for (AutoClosingPair surroundingPair : surroundingPairs) {
 
-                var newPair = new AutoClosingPairConditional(surroundingPair.open, surroundingPair.close,
+                AutoClosingPairConditional newPair = new AutoClosingPairConditional(surroundingPair.open, surroundingPair.close,
                         surroundingPairFlagWithList);
 
-                var mergePairIndex = mergePairs.indexOf(newPair);
+                int mergePairIndex = mergePairs.indexOf(newPair);
 
                 if (mergePairIndex >= 0) {
-                    var mergePair = mergePairs.get(mergePairIndex);
+                    AutoClosingPairConditional mergePair = mergePairs.get(mergePairIndex);
 
                     if (mergePair.notIn == null || mergePair.notIn.isEmpty()) {
                         mergePairs.add(newPair);
@@ -118,7 +122,7 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
             }
         }
 
-        for (var pair : mergePairs) {
+        for (AutoClosingPairConditional pair : mergePairs) {
             putPair(pair.open, new SymbolPair(pair.open, pair.close, new SymbolPairEx(pair)));
         }
 
@@ -132,7 +136,7 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
 
         public SymbolPairEx(AutoClosingPairConditional pair) {
 
-            var notInList = pair.notIn;
+            List<String> notInList = pair.notIn;
 
             if (notInList == null || notInList.isEmpty()) {
                 notInTokenTypeArray = null;
@@ -152,9 +156,9 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
             notInTokenTypeArray = new int[notInList.size()];
 
             for (int i = 0; i < notInTokenTypeArray.length; i++) {
-                var notInValue = notInList.get(i).toLowerCase();
+                String notInValue = notInList.get(i).toLowerCase();
 
-                var notInTokenType = StandardTokenType.String;
+                int notInTokenType = StandardTokenType.String;
 
                 switch (notInValue) {
                     case "string":
@@ -185,21 +189,21 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
                 return true;
             }
 
-            var cursor = editor.getCursor();
+            Cursor cursor = editor.getCursor();
 
-            var currentLine = cursor.getLeftLine();
-            var currentColumn = cursor.getLeftColumn();
+            int currentLine = cursor.getLeftLine();
+            int currentColumn = cursor.getLeftColumn();
 
-            var spansOnCurrentLine = editor.getSpansForLine(currentLine);
+            List<Span> spansOnCurrentLine = editor.getSpansForLine(currentLine);
 
-            var currentSpan = binarySearchSpan(spansOnCurrentLine, currentColumn);
+            Span currentSpan = binarySearchSpan(spansOnCurrentLine, currentColumn);
 
 
-            var extra = currentSpan.extra;
+            Object extra = currentSpan.extra;
 
 
             if (extra instanceof Integer) {
-                var index = Arrays.binarySearch(notInTokenTypeArray, (Integer) extra);
+                int index = Arrays.binarySearch(notInTokenTypeArray, (Integer) extra);
                 return index < 0;
             }
 
@@ -224,7 +228,7 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
                 }
 
                 if (currentSpan.column < column) {
-                    var nextSpan = spanList.get(checkIndex(middle + 1, size));
+                    Span nextSpan = spanList.get(checkIndex(middle + 1, size));
 
                     if (nextSpan.column > column) {
                         return currentSpan;
@@ -237,7 +241,7 @@ public class TextMateSymbolPairMatch extends SymbolPairMatch {
                 }
 
                 // if (currentSpan.column > column)
-                var previousSpan = spanList.get(checkIndex(middle - 1, size));
+                Span previousSpan = spanList.get(checkIndex(middle - 1, size));
 
                 if (previousSpan.column < column) {
                     return currentSpan;

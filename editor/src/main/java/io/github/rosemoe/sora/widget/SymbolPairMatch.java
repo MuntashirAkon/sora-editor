@@ -83,7 +83,7 @@ public class SymbolPairMatch {
      */
     public void putPair(char[] charArray, SymbolPair symbolPair) {
         char endChar = charArray[charArray.length - 1];
-        var list = multipleCharByEndPairMaps.get(endChar);
+        List<SymbolPair> list = multipleCharByEndPairMaps.get(endChar);
 
         if (list == null) {
             list = new ArrayList<>();
@@ -107,7 +107,7 @@ public class SymbolPairMatch {
 
     @Nullable
     public final SymbolPair matchBestPairBySingleChar(char editChar) {
-        var pair = singleCharPairMaps.get(editChar);
+        SymbolPair pair = singleCharPairMaps.get(editChar);
         if (pair == null && parent != null) {
             return parent.matchBestPairBySingleChar(editChar);
         }
@@ -115,10 +115,10 @@ public class SymbolPairMatch {
     }
 
     public final List<SymbolPair> matchBestPairList(char editChar) {
-        var result = multipleCharByEndPairMaps.get(editChar);
+        List<SymbolPair> result = multipleCharByEndPairMaps.get(editChar);
 
         if (result == null && parent != null) {
-            var parentResult = parent.matchBestPairList(editChar);
+            List<SymbolPair> parentResult = parent.matchBestPairList(editChar);
             result = new ArrayList<>(parentResult);
         }
 
@@ -128,7 +128,7 @@ public class SymbolPairMatch {
     @Nullable
     public final SymbolPair matchBestPair(Content content, CharPosition cursorPosition, char[] inputCharArray, char firstChar) {
         // do not apply single character pairs for text with length > 1
-        var singleCharPair = inputCharArray == null ? matchBestPairBySingleChar(firstChar) : null;
+        SymbolPair singleCharPair = inputCharArray == null ? matchBestPairBySingleChar(firstChar) : null;
 
         // matches single character symbol pair first
         if (singleCharPair != null) {
@@ -137,24 +137,24 @@ public class SymbolPairMatch {
         }
 
         // find all possible lists, with a single character for fast search
-        var matchList = matchBestPairList(firstChar);
+        List<SymbolPair> matchList = matchBestPairList(firstChar);
 
         SymbolPair matchPair = null;
-        for (var pair : matchList) {
-            var openCharArray = pair.open.toCharArray();
+        for (SymbolPair pair : matchList) {
+            char[] openCharArray = pair.open.toCharArray();
 
             // if flag is not 1, no match
-            var matchFlag = 1;
-            var insertIndex = cursorPosition.index;
+            int matchFlag = 1;
+            int insertIndex = cursorPosition.index;
 
             // the size = 1
             if (inputCharArray == null) {
-                var arrayIndex = openCharArray.length - 2;
+                int arrayIndex = openCharArray.length - 2;
                 while (arrayIndex >= 0) {
                     if (insertIndex > 0) {
                         insertIndex--;
                     }
-                    var contentChar = content.charAt(insertIndex);
+                    char contentChar = content.charAt(insertIndex);
                     matchFlag &= contentChar == openCharArray[arrayIndex] ? 1 : 0;
                     arrayIndex--;
                 }
@@ -169,7 +169,7 @@ public class SymbolPairMatch {
                     continue;
                 }
 
-                var pairIndex = openCharArray.length - 1;
+                int pairIndex = openCharArray.length - 1;
 
                 for (int charIndex = inputCharArray.length - 1; charIndex > 0; charIndex--, pairIndex--) {
                     matchFlag &= inputCharArray[charIndex] == openCharArray[pairIndex] ? 1 : 0;
@@ -247,7 +247,7 @@ public class SymbolPairMatch {
             if (symbolPairEx == null) {
                 return false;
             }
-            var content = editor.getText();
+            Content content = editor.getText();
             ContentLine currentLine = content.getLine(content.getCursor().getLeftLine());
             return !symbolPairEx.shouldDoReplace(editor, currentLine, content.getCursor().getLeftColumn());
         }

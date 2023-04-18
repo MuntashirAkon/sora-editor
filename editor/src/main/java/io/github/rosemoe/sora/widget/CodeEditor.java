@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint.FontMetricsInt;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -64,7 +65,6 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EdgeEffect;
 import android.widget.EditText;
-import android.widget.OverScroller;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -93,11 +93,13 @@ import io.github.rosemoe.sora.event.SubscriptionReceipt;
 import io.github.rosemoe.sora.graphics.Paint;
 import io.github.rosemoe.sora.lang.EmptyLanguage;
 import io.github.rosemoe.sora.lang.Language;
+import io.github.rosemoe.sora.lang.QuickQuoteHandler;
 import io.github.rosemoe.sora.lang.analysis.StyleUpdateRange;
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer;
 import io.github.rosemoe.sora.lang.format.Formatter;
 import io.github.rosemoe.sora.lang.styling.CodeBlock;
 import io.github.rosemoe.sora.lang.styling.Span;
+import io.github.rosemoe.sora.lang.styling.Spans;
 import io.github.rosemoe.sora.lang.styling.Styles;
 import io.github.rosemoe.sora.text.CharPosition;
 import io.github.rosemoe.sora.text.Content;
@@ -402,8 +404,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @param <T>         Type of built-in component
      */
     public <T extends EditorBuiltinComponent> void replaceComponent(@NonNull Class<T> clazz, @NonNull T replacement) {
-        var old = getComponent(clazz);
-        var isEnabled = old.isEnabled();
+        T old = getComponent(clazz);
+        boolean isEnabled = old.isEnabled();
         old.setEnabled(false);
         if (clazz == EditorAutoCompletion.class) {
             completionWindow = (EditorAutoCompletion) replacement;
@@ -509,7 +511,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         renderFunctionCharacters = true;
         renderer = onCreateRenderer();
 
-        var array = getContext().obtainStyledAttributes(attrs, R.styleable.CodeEditor, defStyleAttr, defStyleRes);
+        android.content.res.TypedArray array = getContext().obtainStyledAttributes(attrs, R.styleable.CodeEditor, defStyleAttr, defStyleRes);
         setHorizontalScrollbarThumbDrawable(array.getDrawable(R.styleable.CodeEditor_android_scrollbarThumbHorizontal));
         setHorizontalScrollbarTrackDrawable(array.getDrawable(R.styleable.CodeEditor_android_scrollbarTrackHorizontal));
         setVerticalScrollbarThumbDrawable(array.getDrawable(R.styleable.CodeEditor_android_scrollbarThumbVertical));
@@ -521,11 +523,11 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         styleDelegate = new EditorStyleDelegate(this);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var configuration = ViewConfiguration.get(getContext());
+            ViewConfiguration configuration = ViewConfiguration.get(getContext());
             verticalScrollFactor = configuration.getScaledVerticalScrollFactor();
         } else {
             try {
-                try (var a = getContext().obtainStyledAttributes(new int[]{android.R.attr.listPreferredItemHeight})) {
+                try (android.content.res.TypedArray a = getContext().obtainStyledAttributes(new int[]{android.R.attr.listPreferredItemHeight})) {
                     verticalScrollFactor = a.getFloat(0, 32);
                     a.recycle();
                 }
@@ -714,7 +716,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (selectionOffset < 0 || selectionOffset > text.length()) {
             throw new IllegalArgumentException("selectionOffset is invalid");
         }
-        var cur = getText().getCursor();
+        Cursor cur = getText().getCursor();
         if (cur.isSelected()) {
             deleteText();
             notifyIMEExternalCursorChange();
@@ -722,7 +724,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         this.text.insert(cur.getRightLine(), cur.getRightColumn(), text);
         notifyIMEExternalCursorChange();
         if (selectionOffset != text.length()) {
-            var pos = this.text.getIndexer().getCharPosition(cur.getRight() - (text.length() - selectionOffset));
+            CharPosition pos = this.text.getIndexer().getCharPosition(cur.getRight() - (text.length() - selectionOffset));
             setSelection(pos.line, pos.column);
         }
     }
@@ -897,9 +899,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         }
 
         // Destroy old one
-        var old = editorLanguage;
+        Language old = editorLanguage;
         if (old != null) {
-            var formatter = old.getFormatter();
+            Formatter formatter = old.getFormatter();
             formatter.setReceiver(null);
             formatter.destroy();
             old.getAnalyzeManager().setReceiver(null);
@@ -916,7 +918,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             completionWindow.hide();
         }
         // Setup new one
-        var mgr = lang.getAnalyzeManager();
+        io.github.rosemoe.sora.lang.analysis.AnalyzeManager mgr = lang.getAnalyzeManager();
         mgr.setReceiver(styleDelegate);
         if (text != null) {
             mgr.reset(new ContentReference(text), extraArguments);
@@ -951,9 +953,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @return <code>true</code> if the editor can handle the keybinding, <code>false</code> otherwise.
      */
     protected boolean canHandleKeyBinding(int keyCode, boolean ctrlPressed, boolean shiftPressed, boolean altPressed) {
-        final var isDpadKey = keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+        final boolean isDpadKey = keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN
                 || keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT;
-        final var isHomeOrEnd = keyCode == KeyEvent.KEYCODE_MOVE_HOME || keyCode == KeyEvent.KEYCODE_MOVE_END;
+        final boolean isHomeOrEnd = keyCode == KeyEvent.KEYCODE_MOVE_HOME || keyCode == KeyEvent.KEYCODE_MOVE_END;
 
         if (ctrlPressed) {
             if (shiftPressed) {
@@ -1289,7 +1291,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
 
     protected void checkForRelayout() {
         if (anyWrapContentSet) {
-            var params = getLayoutParams();
+            ViewGroup.LayoutParams params = getLayoutParams();
             if (params != null) {
                 if (params.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
                     requestLayout();
@@ -1306,7 +1308,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         return renderer;
     }
 
-    public Paint.FontMetricsInt getLineNumberMetrics() {
+    public FontMetricsInt getLineNumberMetrics() {
         return renderer.getLineNumberMetrics();
     }
 
@@ -1322,19 +1324,19 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * if no float array matches the requirement.
      */
     protected float[] obtainFloatArray(int desiredSize, boolean usePainter) {
-        var start = IntPair.getFirst(availableFloatArrayRegion);
-        var end = IntPair.getSecond(availableFloatArrayRegion);
-        var firstVis = getFirstVisibleLine();
-        var lastVis = getLastVisibleLine();
+        int start = IntPair.getFirst(availableFloatArrayRegion);
+        int end = IntPair.getSecond(availableFloatArrayRegion);
+        int firstVis = getFirstVisibleLine();
+        int lastVis = getLastVisibleLine();
         start = Math.max(0, start - 5);
         end = Math.min(end + 5, getLineCount());
         for (int i = start; i < end; i++) {
             // Find line that is not displaying currently
             if (i < firstVis || i > lastVis) {
-                var line = usePainter ? renderer.getLine(i) : text.getLine(i);
+                ContentLine line = usePainter ? renderer.getLine(i) : text.getLine(i);
                 if (line.widthCache != null && line.widthCache.length >= desiredSize) {
                     line.timestamp = 0;
-                    var res = line.widthCache;
+                    float[] res = line.widthCache;
                     line.widthCache = null;
                     return res;
                 }
@@ -1381,7 +1383,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @param line The line to search
      */
     protected long findLeadingAndTrailingWhitespacePos(ContentLine line) {
-        var buffer = line.value;
+        char[] buffer = line.value;
         int column = line.length();
         int leading = 0;
         int trailing = column;
@@ -1418,18 +1420,18 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (!editorSearcher.isResultValid()) {
             return;
         }
-        var res = editorSearcher.lastResults;
+        LongArrayList res = editorSearcher.lastResults;
         if (res == null) {
             return;
         }
-        var lineLeft = text.getCharIndex(line, 0);
-        var lineRight = lineLeft + text.getColumnCount(line);
+        int lineLeft = text.getCharIndex(line, 0);
+        int lineRight = lineLeft + text.getColumnCount(line);
         for (int i = Math.max(0, positions.lowerBoundByFirst(lineLeft) - 1); i < res.size(); i++) {
-            var region = res.get(i);
-            var start = IntPair.getFirst(region);
-            var end = IntPair.getSecond(region);
-            var highlightStart = Math.max(start, lineLeft);
-            var highlightEnd = Math.min(end, lineRight);
+            long region = res.get(i);
+            int start = IntPair.getFirst(region);
+            int end = IntPair.getSecond(region);
+            int highlightStart = Math.max(start, lineLeft);
+            int highlightEnd = Math.min(end, lineRight);
             if (highlightStart < highlightEnd) {
                 positions.add(IntPair.pack(highlightStart - lineLeft, highlightEnd - lineLeft));
             }
@@ -1577,7 +1579,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      */
     @NonNull
     public List<Span> getSpansForLine(int line) {
-        var spanMap = textStyles == null ? null : textStyles.spans;
+        Spans spanMap = textStyles == null ? null : textStyles.spans;
         if (defaultSpans.size() == 0) {
             defaultSpans.add(Span.obtain(0, EditorColorScheme.TEXT_NORMAL));
         }
@@ -1607,8 +1609,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             count++;
             lineCount /= 10;
         }
-        var len = NUMBER_DIGITS.length();
-        var buffer = TemporaryFloatBuffer.obtain(len);
+        int len = NUMBER_DIGITS.length();
+        float[] buffer = TemporaryFloatBuffer.obtain(len);
         renderer.getPaintOther().getTextWidths(NUMBER_DIGITS, buffer);
         TemporaryFloatBuffer.recycle(buffer);
         float single = 0f;
@@ -1632,7 +1634,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                 return;
             }
             if (layout instanceof WordwrapLayout && wordwrap) {
-                var newLayout = new WordwrapLayout(this, text, antiWordBreaking, ((WordwrapLayout) layout).getRowTable(), clearWordwrapCache);
+                WordwrapLayout newLayout = new WordwrapLayout(this, text, antiWordBreaking, ((WordwrapLayout) layout).getRowTable(), clearWordwrapCache);
                 layout.destroyLayout();
                 layout = newLayout;
                 return;
@@ -1665,7 +1667,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @return The string to insert for tab character.
      */
     protected String createTabString() {
-        final var language = getEditorLanguage();
+        final Language language = getEditorLanguage();
         if (language.useTab()) {
             return "\t";
         }
@@ -1744,7 +1746,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Delete text before cursor or selected text (if there is)
      */
     public void deleteText() {
-        var cur = cursor;
+        Cursor cur = cursor;
         if (cur.isSelected()) {
             text.delete(cur.getLeftLine(), cur.getLeftColumn(), cur.getRightLine(), cur.getRightColumn());
         } else {
@@ -1752,8 +1754,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             int line = cur.getLeftLine();
             if (props.deleteEmptyLineFast || (props.deleteMultiSpaces != 1 && col > 0 && text.charAt(line, col - 1) == ' ')) {
                 // Check whether selection is in leading spaces
-                var text = this.text.getLine(cur.getLeftLine()).value;
-                var inLeading = true;
+                char[] text = this.text.getLine(cur.getLeftLine()).value;
+                boolean inLeading = true;
                 for (int i = col - 1; i >= 0; i--) {
                     char ch = text[i];
                     if (ch != ' ' && ch != '\t') {
@@ -1764,8 +1766,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
 
                 if (inLeading) {
                     // Check empty line
-                    var emptyLine = true;
-                    var max = this.text.getColumnCount(line);
+                    boolean emptyLine = true;
+                    int max = this.text.getColumnCount(line);
                     for (int i = col; i < max; i++) {
                         char ch = text[i];
                         if (ch != ' ' && ch != '\t') {
@@ -1823,14 +1825,14 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (text.length() == 0) {
             return;
         }
-        var cur = cursor;
+        Cursor cur = cursor;
         if (cur.isSelected()) {
             if (text.length() > 0 && text.length() == 1) {
-                var quoteHandler = editorLanguage.getQuickQuoteHandler();
+                QuickQuoteHandler quoteHandler = editorLanguage.getQuickQuoteHandler();
                 System.out.println(quoteHandler);
-                var result = quoteHandler == null ? null : quoteHandler.onHandleTyping(text.toString(), this.text, getCursorRange(), getStyles());
+                QuickQuoteHandler.HandleResult result = quoteHandler == null ? null : quoteHandler.onHandleTyping(text.toString(), this.text, getCursorRange(), getStyles());
                 if (result != null && result.isConsumed()) {
-                    var range = result.getNewCursorRange();
+                    TextRange range = result.getNewCursorRange();
                     if (range != null) {
                         setSelectionRegion(range.getStart().line, range.getStart().column, range.getEnd().line, range.getEnd().column);
                     }
@@ -1861,7 +1863,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                     } catch (Exception e) {
                         Log.w(LOG_TAG, "Language object error", e);
                     }
-                    var index = 1;
+                    int index = 1;
                     if (first == '\r' && text.length() >= 2 && text.charAt(1) == '\n') {
                         index = 2;
                     }
@@ -1950,7 +1952,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @param noAnimation true if no animation should be applied
      */
     public void ensurePositionVisible(int line, int column, boolean noAnimation) {
-        var scroller = getScroller();
+        EditorScroller scroller = getScroller();
         float[] layoutOffset = layout.getCharLayoutOffset(line, column);
         // x offset is the left of character
         float xOffset = layoutOffset[1] + measureTextRegionOffset();
@@ -1971,7 +1973,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         float charWidth = column == 0 ? 0 : renderer.measureText(text.getLine(line), line, column - 1, 1);
         if (xOffset < getOffsetX() + (pinLineNumber ? measureTextRegionOffset() : 0)) {
             float backupX = targetX;
-            var scrollSlopX = getWidth() / 2;
+            int scrollSlopX = getWidth() / 2;
             targetX = xOffset + (pinLineNumber ? -measureTextRegionOffset() : 0) - charWidth;
             if (Math.abs(targetX - backupX) < scrollSlopX) {
                 targetX = Math.max(1, backupX - scrollSlopX);
@@ -2077,7 +2079,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @return max scroll y
      */
     public int getScrollMaxY() {
-        var params = getLayoutParams();
+        ViewGroup.LayoutParams params = getLayoutParams();
         return Math.max(0, layout.getLayoutHeight() - (int) (params == null || params.height == ViewGroup.LayoutParams.WRAP_CONTENT ? getHeight() : getHeight() * (1 - verticalExtraSpaceFactor)));
     }
 
@@ -2178,9 +2180,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (isFormatting()) {
             return false;
         }
-        var formatter = editorLanguage.getFormatter();
+        Formatter formatter = editorLanguage.getFormatter();
         formatter.setReceiver(this);
-        var formatContent = text.copyText(false);
+        Content formatContent = text.copyText(false);
         formatContent.setUndoEnabled(false);
         formatter.format(formatContent, getCursorRange());
         postInvalidate();
@@ -2204,9 +2206,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (isFormatting()) {
             return false;
         }
-        var formatter = editorLanguage.getFormatter();
+        Formatter formatter = editorLanguage.getFormatter();
         formatter.setReceiver(this);
-        var formatContent = text.copyText(false);
+        Content formatContent = text.copyText(false);
         formatContent.setUndoEnabled(false);
         formatter.formatRegion(formatContent, new TextRange(start, end), getCursorRange());
         postInvalidate();
@@ -2827,7 +2829,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Get actual line spacing in pixels.
      */
     public int getLineSpacingPixels() {
-        var metrics = renderer.metricsText;
+        FontMetricsInt metrics = renderer.metricsText;
         return ((int) ((metrics.descent - metrics.ascent) * (lineSpacingMultiplier - 1f) + lineSpacingAdd)) / 2 * 2;
     }
 
@@ -2838,8 +2840,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @return baseline y offset
      */
     public int getRowBaseline(int row) {
-        var lineSpacing = getLineSpacingPixels();
-        var metrics = renderer.metricsText;
+        int lineSpacing = getLineSpacingPixels();
+        FontMetricsInt metrics = renderer.metricsText;
         return Math.max(1, metrics.descent - metrics.ascent + lineSpacing) * (row + 1) - metrics.descent - lineSpacing / 2;
     }
 
@@ -2849,7 +2851,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @return height of single row
      */
     public int getRowHeight() {
-        var metrics = renderer.metricsText;
+        FontMetricsInt metrics = renderer.metricsText;
         // Do not let the row height be zero...
         return Math.max(1, metrics.descent - metrics.ascent + getLineSpacingPixels());
     }
@@ -2892,7 +2894,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Get the height of text in row
      */
     public int getRowHeightOfText() {
-        var metrics = renderer.metricsText;
+        FontMetricsInt metrics = renderer.metricsText;
         return metrics.descent - metrics.ascent;
     }
 
@@ -2924,9 +2926,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             int line = IntPair.getFirst(touchHandler.memoryPosition);
             int column = IntPair.getSecond(touchHandler.memoryPosition);
             // Compute new scroll position
-            var row = ((WordwrapLayout) layout).findRow(line, column);
-            var afterScrollY = row * getRowHeight() - getHeight() + touchHandler.focusY;
-            var scroller = touchHandler.getScroller();
+            int row = ((WordwrapLayout) layout).findRow(line, column);
+            float afterScrollY = row * getRowHeight() - getHeight() + touchHandler.focusY;
+            EditorScroller scroller = touchHandler.getScroller();
             dispatchEvent(new ScrollEvent(this, scroller.getCurrX(),
                     scroller.getCurrY(), 0, (int) afterScrollY, ScrollEvent.CAUSE_SCALE_TEXT));
             scroller.startScroll(0, (int) afterScrollY, 0, 0, 0);
@@ -3371,8 +3373,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             if (!clipboardManager.hasPrimaryClip() || clipboardManager.getPrimaryClip() == null) {
                 return;
             }
-            var data = clipboardManager.getPrimaryClip().getItemAt(0);
-            var text = data.getText();
+            ClipData.Item data = clipboardManager.getPrimaryClip().getItemAt(0);
+            CharSequence text = data.getText();
             if (text != null && inputConnection != null) {
                 inputConnection.commitText(text, 1);
                 if (props.formatPastedText) {
@@ -3407,7 +3409,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                 if (length > props.clipboardTextLengthLimit) {
                     Toast.makeText(getContext(), I18nConfig.getResourceId(R.string.sora_editor_clip_text_length_too_large), Toast.LENGTH_SHORT).show();
                 } else {
-                    var clip = getText().substring(cursor.getLeft(), cursor.getRight());
+                    String clip = getText().substring(cursor.getLeft(), cursor.getRight());
                     clipboardManager.setPrimaryClip(ClipData.newPlainText(clip, clip));
                 }
             } else if (shouldCopyLine) {
@@ -3427,13 +3429,13 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Copies the current line to clipboard.
      */
     private void copyLine() {
-        final var cursor = getCursor();
+        final Cursor cursor = getCursor();
         if (cursor.isSelected()) {
             copyText();
             return;
         }
 
-        final var line = cursor.left().line;
+        final int line = cursor.left().line;
         setSelectionRegion(line, 0, line, getText().getColumnCount(line));
         copyText(false);
     }
@@ -3455,15 +3457,15 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Copy the current line to clipboard and delete it.
      */
     public void cutLine() {
-        final var cursor = getCursor();
+        final Cursor cursor = getCursor();
         if (cursor.isSelected()) {
             cutText();
             return;
         }
 
-        final var left = cursor.left();
-        final var line = left.line;
-        final var column = getText().getColumnCount(left.line);
+        final CharPosition left = cursor.left();
+        final int line = left.line;
+        final int column = getText().getColumnCount(left.line);
 
         if (line + 1 == getLineCount()) {
             setSelectionRegion(line, 0, line, getText().getColumnCount(line));
@@ -3479,13 +3481,13 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Does not selects the duplicated line.
      */
     public void duplicateLine() {
-        final var cursor = getCursor();
+        final Cursor cursor = getCursor();
         if (cursor.isSelected()) {
             duplicateSelection();
             return;
         }
 
-        final var left = cursor.left();
+        final CharPosition left = cursor.left();
         setSelectionRegion(left.line, 0, left.line, getText().getColumnCount(left.line), true);
         duplicateSelection("\n", false);
     }
@@ -3515,20 +3517,20 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @param selectDuplicate Whether to select the duplicated content.
      */
     public void duplicateSelection(String prefix, boolean selectDuplicate) {
-        final var cursor = getCursor();
+        final Cursor cursor = getCursor();
         if (!cursor.isSelected()) {
             return;
         }
 
-        final var left = cursor.left();
-        final var right = cursor.right().fromThis();
-        final var sub = getText().subContent(left.line, left.column, right.line, right.column);
+        final CharPosition left = cursor.left();
+        final CharPosition right = cursor.right().fromThis();
+        final Content sub = getText().subContent(left.line, left.column, right.line, right.column);
 
         setSelection(right.line, right.column);
         commitText(prefix + sub, false);
 
         if (selectDuplicate) {
-            final var r = cursor.right();
+            final CharPosition r = cursor.right();
             setSelectionRegion(right.line, right.column, r.line, r.column);
         }
     }
@@ -3537,7 +3539,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * Selects the word at the left selection handle.
      */
     public void selectCurrentWord() {
-        final var left = getCursor().left();
+        final CharPosition left = getCursor().left();
         selectWord(left.line, left.column);
     }
 
@@ -3548,9 +3550,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @param column The column.
      */
     public void selectWord(int line, int column) {
-        final var range = getWordRange(line, column);
-        final var start = range.getStart();
-        final var end = range.getEnd();
+        final TextRange range = getWordRange(line, column);
+        final CharPosition start = range.getStart();
+        final CharPosition end = range.getEnd();
         setSelectionRegion(start.line, start.column, end.line, end.column, SelectionChangeEvent.CAUSE_LONG_PRESS);
         selectionAnchor = getCursor().left();
     }
@@ -3930,7 +3932,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      */
     protected void updateSelection() {
         if (props.disallowSuggestions) {
-            var index = new java.util.Random().nextInt();
+            int index = new java.util.Random().nextInt();
             inputMethodManager.updateSelection(this, index, index, -1, -1);
             return;
         }
@@ -3951,7 +3953,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      */
     protected void updateExtractedText() {
         if (extractingTextRequest != null) {
-            var text = extractText(extractingTextRequest);
+            ExtractedText text = extractText(extractingTextRequest);
             inputMethodManager.updateExtractedText(this, extractingTextRequest.token, text);
         }
     }
@@ -4054,13 +4056,13 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         completionWindow.cancelCompletion();
         if (editorLanguage != null) {
             editorLanguage.getAnalyzeManager().destroy();
-            var formatter = editorLanguage.getFormatter();
+            Formatter formatter = editorLanguage.getFormatter();
             formatter.setReceiver(null);
             formatter.destroy();
             editorLanguage.destroy();
             editorLanguage = new EmptyLanguage();
         }
-        final var text = this.text;
+        final Content text = this.text;
         if (text != null) {
             text.removeContentListener(this);
             text.setLineListener(null);
@@ -4158,7 +4160,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
 
     @Override
     public AccessibilityNodeInfo createAccessibilityNodeInfo() {
-        var info = super.createAccessibilityNodeInfo();
+        AccessibilityNodeInfo info = super.createAccessibilityNodeInfo();
         if (isEnabled()) {
             info.setEditable(isEditable());
             info.setTextSelection(cursor.getLeft(), cursor.getRight());
@@ -4173,7 +4175,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             final int scrollRange = getScrollMaxY();
             if (scrollRange > 0) {
                 info.setScrollable(true);
-                var scrollY = getOffsetY();
+                int scrollY = getOffsetY();
                 if (scrollY > 0) {
                     info.addAction(
                             AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD);
@@ -4195,7 +4197,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
     @Override
     public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
         super.onInitializeAccessibilityEvent(event);
-        var maxScrollY = getScrollMaxY();
+        int maxScrollY = getScrollMaxY();
         event.setScrollable(maxScrollY > 0);
         event.setMaxScrollX(getScrollMaxX());
         event.setMaxScrollY(maxScrollY);
@@ -4421,7 +4423,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
 
     @Override
     public void computeScroll() {
-        var scroller = touchHandler.getScroller();
+        EditorScroller scroller = touchHandler.getScroller();
         if (scroller.computeScrollOffset()) {
             if (!scroller.isFinished() && (scroller.getStartX() != scroller.getFinalX() || scroller.getStartY() != scroller.getFinalY())) {
                 scrollerFinalX = scroller.getFinalX();
@@ -4433,7 +4435,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                 edgeEffectHorizontal.onAbsorb((int) scroller.getCurrVelocity());
                 touchHandler.glowLeftOrRight = false;
             } else {
-                var max = getScrollMaxX();
+                int max = getScrollMaxX();
                 if (scroller.getCurrX() >= max && scrollerFinalX >= max && edgeEffectHorizontal.isFinished() && horizontalAbsorb) {
                     edgeEffectHorizontal.onAbsorb((int) scroller.getCurrVelocity());
                     touchHandler.glowLeftOrRight = true;
@@ -4443,7 +4445,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                 edgeEffectVertical.onAbsorb((int) scroller.getCurrVelocity());
                 touchHandler.glowTopOrBottom = false;
             } else {
-                var max = getScrollMaxY();
+                int max = getScrollMaxY();
                 if (scroller.getCurrY() >= max && scrollerFinalY >= max && edgeEffectVertical.isFinished() && verticalAbsorb) {
                     edgeEffectVertical.onAbsorb((int) scroller.getCurrVelocity());
                     touchHandler.glowTopOrBottom = true;
@@ -4535,8 +4537,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                             int endColumn, @NonNull CharSequence insertedContent) {
         renderer.updateTimestamp();
         styleDelegate.onTextChange();
-        var start = text.getIndexer().getCharPosition(startLine, startColumn);
-        var end = text.getIndexer().getCharPosition(endLine, endColumn);
+        CharPosition start = text.getIndexer().getCharPosition(startLine, startColumn);
+        CharPosition end = text.getIndexer().getCharPosition(endLine, endColumn);
         renderer.buildMeasureCacheForLines(startLine, endLine);
 
         // Update spans
@@ -4559,7 +4561,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         waitForNextChange = false;
 
         // Auto completion
-        var needCompletion = false;
+        boolean needCompletion = false;
         if (completionWindow.isEnabled() && !text.isUndoManagerWorking()) {
             if ((!inputConnection.composingText.isComposing() || props.autoCompletionOnComposing) && endColumn != 0 && startLine == endLine) {
                 needCompletion = true;
@@ -4595,8 +4597,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                             int endColumn, @NonNull CharSequence deletedContent) {
         renderer.updateTimestamp();
         styleDelegate.onTextChange();
-        var start = text.getIndexer().getCharPosition(startLine, startColumn);
-        var end = start.fromThis();
+        CharPosition start = text.getIndexer().getCharPosition(startLine, startColumn);
+        CharPosition end = start.fromThis();
         end.column = endColumn;
         end.line = endLine;
         end.index = start.index + deletedContent.length();
@@ -4618,7 +4620,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
 
         updateCursor();
 
-        var needCompletion = false;
+        boolean needCompletion = false;
         if (completionWindow.isEnabled() && !text.isUndoManagerWorking()) {
             if (!inputConnection.composingText.isComposing() && completionWindow.isShowing()) {
                 if (startLine != endLine || startColumn != endColumn - 1) {
@@ -4664,7 +4666,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
             int column = cursor.getLeftColumn();
             int x = getOffsetX();
             int y = getOffsetY();
-            var string = (applyContent instanceof Content) ? ((Content) applyContent).toStringBuilder() : applyContent;
+            CharSequence string = (applyContent instanceof Content) ? ((Content) applyContent).toStringBuilder() : applyContent;
             text.beginBatchEdit();
             text.delete(0, 0, text.getLineCount() - 1,
                     text.getColumnCount(text.getLineCount() - 1));
@@ -4676,8 +4678,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
                 setSelectionAround(line, column);
             } else {
                 try {
-                    var start = cursorRange.getStart();
-                    var end = cursorRange.getEnd();
+                    CharPosition start = cursorRange.getStart();
+                    CharPosition end = cursorRange.getEnd();
                     setSelectionRegion(start.line, start.column, end.line, end.column);
                 } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();

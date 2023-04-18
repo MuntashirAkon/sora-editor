@@ -25,6 +25,8 @@ import org.eclipse.tm4e.core.internal.parser.PropertySettable;
 import org.eclipse.tm4e.core.internal.types.IRawGrammar;
 import org.eclipse.tm4e.core.registry.IGrammarSource;
 
+import java.io.Reader;
+
 /**
  * TextMate Grammar reader utilities.
  */
@@ -60,7 +62,7 @@ public final class GrammarReader {
     private static final PListParser<RawGrammar> YAML_PARSER = new PListParserYAML<>(OBJECT_FACTORY);
 
     public static IRawGrammar readGrammar(final IGrammarSource source) throws Exception {
-        try (var reader = source.getReader()) {
+        try (Reader reader = source.getReader()) {
             switch (source.getContentType()) {
                 case JSON:
                     return JSON_PARSER.parse(reader);

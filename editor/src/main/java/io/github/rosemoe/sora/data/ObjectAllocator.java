@@ -53,7 +53,7 @@ public class ObjectAllocator {
         while (sizeAnother > 0 && size < RECYCLE_LIMIT) {
             size++;
             sizeAnother--;
-            var obj = src.get(sizeAnother);
+            CodeBlock obj = src.get(sizeAnother);
             obj.clear();
             codeBlocks.add(obj);
         }

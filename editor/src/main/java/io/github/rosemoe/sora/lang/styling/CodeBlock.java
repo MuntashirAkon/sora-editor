@@ -36,7 +36,7 @@ import java.util.Objects;
 public class CodeBlock {
 
     public static final Comparator<CodeBlock> COMPARATOR_END = (a, b) -> {
-        var res = Integer.compare(a.endLine, b.endLine);
+        int res = Integer.compare(a.endLine, b.endLine);
         if (res == 0) {
             return Integer.compare(a.endColumn, b.endColumn);
         } else {
@@ -44,7 +44,7 @@ public class CodeBlock {
         }
     };
     public static final Comparator<CodeBlock> COMPARATOR_START = (a, b) -> {
-        var res = Integer.compare(a.startLine, b.startLine);
+        int res = Integer.compare(a.startLine, b.startLine);
         if (res == 0) {
             return Integer.compare(a.startColumn, b.startColumn);
         } else {

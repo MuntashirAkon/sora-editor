@@ -64,7 +64,7 @@ public class RawRepository extends HashMap<String, IRawRule>
 
 	@Override
 	public void putEntries(final PropertySettable<IRawRule> target) {
-		for (final var entry : entrySet()) {
+		for (final Entry<String, IRawRule> entry : entrySet()) {
 			target.setProperty(entry.getKey(), entry.getValue());
 		}
 	}

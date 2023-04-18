@@ -36,7 +36,7 @@ public class ScopeStack {
 	@Nullable
 	public static ScopeStack from(final String... segments) {
 		ScopeStack result = null;
-		for (var i = 0; i < segments.length; i++) {
+		for (int i = 0; i < segments.length; i++) {
 			result = new ScopeStack(result, segments[i]);
 		}
 		return result;
@@ -45,7 +45,7 @@ public class ScopeStack {
 	@Nullable
 	public static ScopeStack from(final List<String> segments) {
 		ScopeStack result = null;
-		for (var i = 0; i < segments.size(); i++) {
+		for (int i = 0; i < segments.size(); i++) {
 			result = new ScopeStack(result, segments.get(i));
 		}
 		return result;
@@ -67,7 +67,7 @@ public class ScopeStack {
 	public List<String> getSegments() {
 		@Nullable
 		ScopeStack item = this;
-		final var result = new ArrayList<String>();
+		final ArrayList<String> result = new ArrayList<String>();
 		while (item != null) {
 			result.add(item.scopeName);
 			item = item.parent;

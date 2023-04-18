@@ -142,14 +142,14 @@ public class Styles {
      */
     public void adjustOnInsert(@NonNull CharPosition start, @NonNull CharPosition end) {
         spans.adjustOnInsert(start, end);
-        var delta = end.line - start.line;
+        int delta = end.line - start.line;
         if (delta == 0) {
             return;
         }
         if (blocks != null)
             BlocksUpdater.update(blocks, start.line, delta);
         if (lineStyles != null) {
-            for (var styles : lineStyles) {
+            for (LineStyles styles : lineStyles) {
                 if (styles.getLine() > start.line) {
                     styles.setLine(styles.getLine() + delta);
                     styles.updateElements();
@@ -163,17 +163,17 @@ public class Styles {
      */
     public void adjustOnDelete(@NonNull CharPosition start, @NonNull CharPosition end) {
         spans.adjustOnDelete(start, end);
-        var delta = start.line - end.line;
+        int delta = start.line - end.line;
         if (delta == 0) {
             return;
         }
         if (blocks != null)
             BlocksUpdater.update(blocks, start.line, delta);
         if (lineStyles != null) {
-            var itr = lineStyles.iterator();
+            java.util.Iterator<LineStyles> itr = lineStyles.iterator();
             while (itr.hasNext()) {
-                var styles = itr.next();
-                var line = styles.getLine();
+                LineStyles styles = itr.next();
+                int line = styles.getLine();
                 if (line > end.line) {
                     styles.setLine(line + delta);
                     styles.updateElements();
@@ -189,20 +189,20 @@ public class Styles {
             lineStyles = new ArrayList<>();
             styleTypeCount = new ConcurrentHashMap<>();
         }
-        var type = style.getClass();
-        for (var lineStyle : lineStyles) {
+        Class<?> type = style.getClass();
+        for (LineStyles lineStyle : lineStyles) {
             if (lineStyle.getLine() == style.getLine()) {
                 styleCountUpdate(type, lineStyle.addStyle(style));
                 return;
             }
         }
-        var lineStyle = new LineStyles(style.getLine());
+        LineStyles lineStyle = new LineStyles(style.getLine());
         lineStyles.add(lineStyle);
         styleCountUpdate(type, lineStyle.addStyle(style));
     }
 
     private void styleCountUpdate(@NonNull Class<?> type, int delta) {
-        var res = styleTypeCount.get(type);
+        MutableInt res = styleTypeCount.get(type);
         if (res == null) {
             res = new MutableInt(0);
             styleTypeCount.put(type, res);
@@ -217,7 +217,7 @@ public class Styles {
         if (lineStyles == null) {
             return;
         }
-        for (var lineStyle : lineStyles) {
+        for (LineStyles lineStyle : lineStyles) {
             if (lineStyle.getLine() == line) {
                 styleCountUpdate(type, -lineStyle.eraseStyle(type));
                 break;
@@ -259,9 +259,9 @@ public class Styles {
     public void finishBuilding() {
         if (blocks != null) {
             int pre = -1;
-            var sort = false;
+            boolean sort = false;
             for (int i = 0; i < blocks.size() - 1; i++) {
-                var cur = blocks.get(i + 1).endLine;
+                int cur = blocks.get(i + 1).endLine;
                 if (pre > cur) {
                     sort = true;
                     break;

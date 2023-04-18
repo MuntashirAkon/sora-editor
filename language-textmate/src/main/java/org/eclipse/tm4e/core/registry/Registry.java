@@ -30,6 +30,7 @@ import org.eclipse.tm4e.core.internal.registry.SyncRegistry;
 import org.eclipse.tm4e.core.internal.theme.IRawTheme;
 import org.eclipse.tm4e.core.internal.theme.Theme;
 import org.eclipse.tm4e.core.internal.theme.ThemeReader;
+import org.eclipse.tm4e.core.internal.types.IRawGrammar;
 
 import java.util.HashMap;
 import java.util.List;
@@ -141,7 +142,7 @@ public final class Registry {
             @Nullable final Map<String, Integer> embeddedLanguages,
             @Nullable final Map<String, Integer> tokenTypes,
             @Nullable final BalancedBracketSelectors balancedBracketSelectors) {
-        final var dependencyProcessor = new ScopeDependencyProcessor(this._syncRegistry, initialScopeName);
+        final ScopeDependencyProcessor dependencyProcessor = new ScopeDependencyProcessor(this._syncRegistry, initialScopeName);
         while (!dependencyProcessor.Q.isEmpty()) {
             for (AbsoluteRuleReference request : dependencyProcessor.Q) {
                 this._loadSingleGrammar(request.scopeName);
@@ -162,13 +163,13 @@ public final class Registry {
     }
 
     private boolean _doLoadSingleGrammar(final String scopeName) {
-        final var grammarSource = this._options.getGrammarSource(scopeName);
+        final @Nullable IGrammarSource grammarSource = this._options.getGrammarSource(scopeName);
         if (grammarSource == null) {
             LOGGER.w("No grammar source for scope [%s]", scopeName);
             return false;
         }
         try {
-            final var grammar = GrammarReader.readGrammar(grammarSource);
+            final IRawGrammar grammar = GrammarReader.readGrammar(grammarSource);
             this._syncRegistry.addGrammar(grammar, this._options.getInjections(scopeName));
         } catch (final Exception ex) {
             LOGGER.w("Loading grammar for scope [%s] failed: {%s}", scopeName, ex.getMessage(), ex);
@@ -187,7 +188,7 @@ public final class Registry {
             @Nullable final Integer initialLanguage,
             @Nullable final Map<String, Integer> embeddedLanguages) throws TMException {
         try {
-            final var rawGrammar = GrammarReader.readGrammar(source);
+            final IRawGrammar rawGrammar = GrammarReader.readGrammar(source);
             this._syncRegistry.addGrammar(rawGrammar,
                     injections == null || injections.isEmpty()
                             ? this._options.getInjections(rawGrammar.getScopeName())

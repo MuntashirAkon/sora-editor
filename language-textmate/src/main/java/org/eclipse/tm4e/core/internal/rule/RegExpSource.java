@@ -50,7 +50,7 @@ final class RegExpSource {
         if (handleAnchors && !regExpSource.isEmpty()) {
             final int len = regExpSource.length();
             int lastPushedPos = 0;
-            final var output = new StringBuilder();
+            final StringBuilder output = new StringBuilder();
 
             boolean hasAnchors = false;
             for (int pos = 0; pos < len; pos++) {
@@ -107,8 +107,8 @@ final class RegExpSource {
 
     @SuppressWarnings("null")
     String resolveBackReferences(final CharSequence lineText, final OnigCaptureIndex[] captureIndices) {
-        final var capturedValues = new ArrayList<String>(captureIndices.length);
-        for (final var capture : captureIndices) {
+        final ArrayList<String> capturedValues = new ArrayList<String>(captureIndices.length);
+        for (final OnigCaptureIndex capture : captureIndices) {
             capturedValues.add(lineText.subSequence(capture.start, capture.end).toString());
         }
 
@@ -118,7 +118,7 @@ final class RegExpSource {
             try {
                 final int index = Integer.parseInt(match.group(1));
                 if (index < captureIndices.length) {
-                    final var replacement = RegexSource.escapeRegExpCharacters(capturedValues.get(index));
+                    final String replacement = RegexSource.escapeRegExpCharacters(capturedValues.get(index));
                     return Matcher.quoteReplacement(replacement); // see https://stackoverflow.com/a/70785772/5116073
                 }
             } catch (final NumberFormatException ex) {
@@ -127,8 +127,8 @@ final class RegExpSource {
             return "";
         };
 
-        var matcher = BACK_REFERENCING_END.matcher(this.source);
-        var result = new StringBuffer();
+        Matcher matcher = BACK_REFERENCING_END.matcher(this.source);
+        StringBuffer result = new StringBuffer();
         while (matcher.find()) {
             matcher.appendReplacement(result, matchFunction.apply(matcher));
         }
@@ -151,13 +151,13 @@ final class RegExpSource {
     }
 
     private String[][] buildAnchorCache() {
-        final var source = this.source;
-        final var sourceLen = source.length();
+        final String source = this.source;
+        final int sourceLen = source.length();
 
-        final var A0_G0_result = new StringBuilder(sourceLen);
-        final var A0_G1_result = new StringBuilder(sourceLen);
-        final var A1_G0_result = new StringBuilder(sourceLen);
-        final var A1_G1_result = new StringBuilder(sourceLen);
+        final StringBuilder A0_G0_result = new StringBuilder(sourceLen);
+        final StringBuilder A0_G1_result = new StringBuilder(sourceLen);
+        final StringBuilder A1_G0_result = new StringBuilder(sourceLen);
+        final StringBuilder A1_G1_result = new StringBuilder(sourceLen);
 
         for (int pos = 0, len = sourceLen; pos < len; pos++) {
             final char ch = source.charAt(pos);
@@ -197,7 +197,7 @@ final class RegExpSource {
     }
 
     String resolveAnchors(final boolean allowA, final boolean allowG) {
-        final var anchorCache = this.anchorCache;
+        final @Nullable String[][] anchorCache = this.anchorCache;
         if (anchorCache == null) {
             return this.source;
         }

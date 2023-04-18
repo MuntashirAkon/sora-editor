@@ -29,15 +29,18 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.eclipse.tm4e.languageconfiguration.model.CharacterPair;
 import org.eclipse.tm4e.languageconfiguration.model.CompleteEnterAction;
 import org.eclipse.tm4e.languageconfiguration.model.EnterAction;
+import org.eclipse.tm4e.languageconfiguration.model.IndentationRules;
 import org.eclipse.tm4e.languageconfiguration.model.LanguageConfiguration;
+import org.eclipse.tm4e.languageconfiguration.model.OnEnterRule;
 import org.eclipse.tm4e.languageconfiguration.supports.IndentRulesSupport;
 import org.eclipse.tm4e.languageconfiguration.supports.OnEnterSupport;
 import org.eclipse.tm4e.languageconfiguration.utils.TabSpacesInfo;
 
 import java.util.Arrays;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import io.github.rosemoe.sora.lang.smartEnter.NewlineHandleResult;
 import io.github.rosemoe.sora.lang.smartEnter.NewlineHandler;
@@ -69,7 +72,7 @@ public class TextMateNewlineHandler implements NewlineHandler {
 
     public TextMateNewlineHandler(TextMateLanguage language) {
         this.language = language;
-        var languageConfiguration = language.languageConfiguration;
+        LanguageConfiguration languageConfiguration = language.languageConfiguration;
 
         this.languageConfiguration = languageConfiguration;
 
@@ -77,10 +80,10 @@ public class TextMateNewlineHandler implements NewlineHandler {
             return;
         }
 
-        var enterRules = languageConfiguration.getOnEnterRules();
-        var brackets = languageConfiguration.getBrackets();
+        @Nullable List<OnEnterRule> enterRules = languageConfiguration.getOnEnterRules();
+        @Nullable List<CharacterPair> brackets = languageConfiguration.getBrackets();
 
-        var indentationsRules = languageConfiguration.getIndentationRules();
+        @Nullable IndentationRules indentationsRules = languageConfiguration.getIndentationRules();
 
         if (enterRules != null) {
             enterSupport = new OnEnterSupport(brackets, enterRules);
@@ -115,13 +118,13 @@ public class TextMateNewlineHandler implements NewlineHandler {
 
         // https://github.com/microsoft/vscode/blob/bf63ea1932dd253745f38a4cbe26bb9be01801b1/src/vs/editor/common/cursor/cursorTypeOperations.ts#L309
 
-        var delim = "\n"; /*command.text;*/
+        String delim = "\n"; /*command.text;*/
 
 
         if (indentForEnter != null) {
 
-            var normalIndent = normalizeIndentation(indentForEnter.second);
-            var typeText = delim + normalIndent;
+            String normalIndent = normalizeIndentation(indentForEnter.second);
+            String typeText = delim + normalIndent;
 
             //var caretOffset = normalIndent.length() ;
             return new NewlineHandleResult(typeText, 0);
@@ -131,8 +134,8 @@ public class TextMateNewlineHandler implements NewlineHandler {
             case None:
             case Indent: {
                 // Nothing special
-                final var increasedIndent = normalizeIndentation(enterAction.indentation + enterAction.appendText);
-                final var typeText = delim + increasedIndent;
+                final String increasedIndent = normalizeIndentation(enterAction.indentation + enterAction.appendText);
+                final String typeText = delim + increasedIndent;
 
                 // var caretOffset = typeText.length();
                 // offset value is not needed because the editor ignores the position of invisible characters when moving the cursor
@@ -141,18 +144,18 @@ public class TextMateNewlineHandler implements NewlineHandler {
             }// Indent once
             case IndentOutdent: {
                 // Ultra special
-                final var normalIndent = normalizeIndentation(enterAction.indentation);
-                final var increasedIndent = normalizeIndentation(enterAction.indentation + enterAction.appendText);
-                final var typeText = delim + increasedIndent + delim + normalIndent;
+                final String normalIndent = normalizeIndentation(enterAction.indentation);
+                final String increasedIndent = normalizeIndentation(enterAction.indentation + enterAction.appendText);
+                final String typeText = delim + increasedIndent + delim + normalIndent;
 
-                var caretOffset = normalIndent.length() + 1;
+                int caretOffset = normalIndent.length() + 1;
                 return new NewlineHandleResult(typeText, caretOffset);
             }
             case Outdent:
-                final var indentation = TextUtils.getIndentationFromWhitespace(enterAction.indentation, getTabSpaces());
-                final var outdentedText = outdentString(normalizeIndentation(indentation + enterAction.appendText));
+                final String indentation = TextUtils.getIndentationFromWhitespace(enterAction.indentation, getTabSpaces());
+                final String outdentedText = outdentString(normalizeIndentation(indentation + enterAction.appendText));
 
-                var caretOffset = outdentedText.length() + 1;
+                int caretOffset = outdentedText.length() + 1;
                 return new NewlineHandleResult(outdentedText, caretOffset);
 
         }
@@ -165,28 +168,28 @@ public class TextMateNewlineHandler implements NewlineHandler {
     protected Pair<String, String> getIndentForEnter(Content text, CharPosition position) {
         // https://github.com/microsoft/vscode/blob/bf63ea1932dd253745f38a4cbe26bb9be01801b1/src/vs/editor/common/languages/autoIndent.ts#L278
 
-        var currentLineText = text.getLineString(position.line);
+        String currentLineText = text.getLineString(position.line);
 
-        var beforeEnterText = currentLineText.substring(0, position.column);
+        String beforeEnterText = currentLineText.substring(0, position.column);
 
-        var afterEnterText = currentLineText.substring(position.column);
+        String afterEnterText = currentLineText.substring(position.column);
 
         if (indentRulesSupport == null) {
             return null;
         }
 
-        var beforeEnterIndent = TextUtils.getLeadingWhitespace(beforeEnterText, 0, beforeEnterText.length());
+        String beforeEnterIndent = TextUtils.getLeadingWhitespace(beforeEnterText, 0, beforeEnterText.length());
 
-        var afterEnterAction = getInheritIndentForLine(new WrapperContentImp(text, position.line, beforeEnterText), true, position.line + 1);
+        InheritIndentResult afterEnterAction = getInheritIndentForLine(new WrapperContentImp(text, position.line, beforeEnterText), true, position.line + 1);
 
-        var tabSpaces = TextUtils.getTabSpaces(language);
+        TabSpacesInfo tabSpaces = TextUtils.getTabSpaces(language);
 
         if (afterEnterAction == null) {
             return new Pair<>(beforeEnterIndent, beforeEnterIndent);
         }
 
-        var afterEnterIndent = afterEnterAction.indentation;
-        var indent = "";
+        String afterEnterIndent = afterEnterAction.indentation;
+        String indent = "";
 
         if (tabSpaces.isInsertSpaces()) {
             indent = " ".repeat(tabSpaces.getTabSize());
@@ -237,7 +240,7 @@ public class TextMateNewlineHandler implements NewlineHandler {
             return new InheritIndentResult("", null);
         }
 
-        var precedingUnIgnoredLine = getPrecedingValidLine(wrapperContent, line);
+        int precedingUnIgnoredLine = getPrecedingValidLine(wrapperContent, line);
 
         if (precedingUnIgnoredLine <= -1) {
             return null;
@@ -245,7 +248,7 @@ public class TextMateNewlineHandler implements NewlineHandler {
             return new InheritIndentResult("", null);
         }*/
 
-        var precedingUnIgnoredLineContent = wrapperContent.getLineContent(precedingUnIgnoredLine);
+        String precedingUnIgnoredLineContent = wrapperContent.getLineContent(precedingUnIgnoredLine);
         if (indentRulesSupport.shouldIncrease(precedingUnIgnoredLineContent) || indentRulesSupport.shouldIndentNextLine(precedingUnIgnoredLineContent)) {
             return new InheritIndentResult(TextUtils.getLeadingWhitespace(precedingUnIgnoredLineContent, 0, precedingUnIgnoredLineContent.length()), EnterAction.IndentAction.Indent, precedingUnIgnoredLine);
         } else if (indentRulesSupport.shouldDecrease(precedingUnIgnoredLineContent)) {
@@ -261,16 +264,16 @@ public class TextMateNewlineHandler implements NewlineHandler {
             }
 
 
-            var previousLine = precedingUnIgnoredLine - 1;
+            int previousLine = precedingUnIgnoredLine - 1;
 
-            var previousLineIndentMetadata = indentRulesSupport.getIndentMetadata(wrapperContent.getLineContent(previousLine));
+            int previousLineIndentMetadata = indentRulesSupport.getIndentMetadata(wrapperContent.getLineContent(previousLine));
 
             // 	if (!(previousLineIndentMetadata & (IndentConsts.INCREASE_MASK | IndentConsts.DECREASE_MASK)) &&
             //			(previousLineIndentMetadata & IndentConsts.INDENT_NEXTLINE_MASK)) {
             if (((previousLineIndentMetadata & (IndentRulesSupport.IndentConsts.INCREASE_MASK | IndentRulesSupport.IndentConsts.DECREASE_MASK)) == 0) && (previousLineIndentMetadata & IndentRulesSupport.IndentConsts.INDENT_NEXTLINE_MASK) == 0 && previousLineIndentMetadata > 0) {
 
-                var stopLine = 0;
-                for (var i = previousLine - 1; i > 0; i--) {
+                int stopLine = 0;
+                for (int i = previousLine - 1; i > 0; i--) {
                     if (indentRulesSupport.shouldIndentNextLine(wrapperContent.getLineContent((i)))) {
                         continue;
                     }
@@ -288,13 +291,13 @@ public class TextMateNewlineHandler implements NewlineHandler {
 
 
             // search from precedingUnIgnoredLine until we find one whose indent is not temporary
-            for (var i = precedingUnIgnoredLine; i > 0; i--) {
-                var lineContent = wrapperContent.getLineContent(i);
+            for (int i = precedingUnIgnoredLine; i > 0; i--) {
+                String lineContent = wrapperContent.getLineContent(i);
                 if (indentRulesSupport.shouldIncrease(lineContent)) {
                     return new InheritIndentResult(TextUtils.getLeadingWhitespace(lineContent), EnterAction.IndentAction.Indent, i);
                 } else if (indentRulesSupport.shouldIndentNextLine(lineContent)) {
-                    var stopLine = 0;
-                    for (var j = i - 1; j > 0; j--) {
+                    int stopLine = 0;
+                    for (int j = i - 1; j > 0; j--) {
                         if (indentRulesSupport.shouldIndentNextLine(wrapperContent.getLineContent(i))) {
                             continue;
                         }
@@ -329,7 +332,7 @@ public class TextMateNewlineHandler implements NewlineHandler {
             int lastLineNumber;
 
             for (lastLineNumber = lineNumber - 1; lastLineNumber >= 0; lastLineNumber--) {
-                var text = content.getLineContent(lastLineNumber);
+                String text = content.getLineContent(lastLineNumber);
                 if (indentRulesSupport.shouldIgnore(text) /*|| precedingValidPattern.matcher(text).matches()*/ || text.isEmpty()) {
                     continue;
                 }
@@ -349,24 +352,24 @@ public class TextMateNewlineHandler implements NewlineHandler {
     public CompleteEnterAction getEnterAction(final Content content, final CharPosition position) {
         String indentation = TextUtils.getLinePrefixingWhitespaceAtPosition(content, position);
         // let scopedLineTokens = this.getScopedLineTokens(model, range.startLineNumber, range.startColumn);
-        final var onEnterSupport = this.enterSupport;
+        final OnEnterSupport onEnterSupport = this.enterSupport;
 
 
         if (onEnterSupport == null) {
             return null;
         }
 
-        var scopedLineText = content.getLineString(position.line);
+        String scopedLineText = content.getLineString(position.line);
 
 
-        var beforeEnterText = scopedLineText.substring(0, position.column  /*- 0*/ /*scopedLineTokens.firstCharOffset*/);
+        String beforeEnterText = scopedLineText.substring(0, position.column  /*- 0*/ /*scopedLineTokens.firstCharOffset*/);
 
 
         // String afterEnterText = null;
 
         // selection support
         // if (range.isEmpty()) {
-        var afterEnterText = scopedLineText.substring(position.column /*- scopedLineTokens.firstCharOffset*/);
+        String afterEnterText = scopedLineText.substring(position.column /*- scopedLineTokens.firstCharOffset*/);
         // afterEnterText = scopedLineText.substr(range.startColumn - 1 - scopedLineTokens.firstCharOffset);
         // } else {
         // const endScopedLineTokens = this.getScopedLineTokens(model,
@@ -398,7 +401,7 @@ public class TextMateNewlineHandler implements NewlineHandler {
             }
         } */
 
-        var previousLineText = "";
+        String previousLineText = "";
 
         if (position.line > 1 /*|| position.column == 0*/) {
             // This is not the first line and the entire line belongs to this mode
@@ -430,7 +433,7 @@ public class TextMateNewlineHandler implements NewlineHandler {
             enterResult.appendText = "\t" + enterResult.appendText;
         }
 
-        final var removeText = enterResult.removeText;
+        final @Nullable Integer removeText = enterResult.removeText;
         if (removeText != null) {
             indentation = indentation.substring(0, indentation.length() - removeText);
         }

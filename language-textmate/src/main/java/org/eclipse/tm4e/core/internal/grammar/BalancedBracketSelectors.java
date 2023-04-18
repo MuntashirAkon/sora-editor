@@ -60,13 +60,13 @@ public class BalancedBracketSelectors {
 	}
 
 	boolean match(final List<String> scopes) {
-		for (final var excluder : this.unbalancedBracketScopes) {
+		for (final Matcher<List<String>> excluder : this.unbalancedBracketScopes) {
 			if (excluder.matches(scopes)) {
 				return false;
 			}
 		}
 
-		for (final var includer : this.balancedBracketScopes) {
+		for (final Matcher<List<String>> includer : this.balancedBracketScopes) {
 			if (includer.matches(scopes)) {
 				return true;
 			}

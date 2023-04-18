@@ -157,14 +157,14 @@ public class CachedIndexer implements Indexer, ContentListener {
         int workIndex = start.index;
         //Move the column to the line end
         {
-            var addition = Math.max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0);
+            int addition = Math.max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0);
             int column = content.getColumnCountUnsafe(workLine) + addition;
             workIndex += column - workColumn;
             workColumn = column;
         }
         while (workIndex < index) {
             workLine++;
-            var addition = Math.max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0);
+            int addition = Math.max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0);
             workColumn = content.getColumnCountUnsafe(workLine) + addition;
             workIndex += workColumn + 1;
         }
@@ -194,7 +194,7 @@ public class CachedIndexer implements Indexer, ContentListener {
             workIndex -= workColumn + 1;
             workLine--;
             if (workLine != -1) {
-                var addition = Math.max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0);
+                int addition = Math.max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0);
                 workColumn = content.getColumnCountUnsafe(workLine) + addition;
             } else {
                 // Reached the start of text,we have to use findIndexForward() as this method can not handle it
@@ -334,7 +334,7 @@ public class CachedIndexer implements Indexer, ContentListener {
     @NonNull
     @Override
     public CharPosition getCharPosition(int index) {
-        var pos = new CharPosition();
+        CharPosition pos = new CharPosition();
         getCharPosition(index, pos);
         return pos;
     }
@@ -363,7 +363,7 @@ public class CachedIndexer implements Indexer, ContentListener {
     @NonNull
     @Override
     public CharPosition getCharPosition(int line, int column) {
-        var pos = new CharPosition();
+        CharPosition pos = new CharPosition();
         getCharPosition(line, column, pos);
         return pos;
     }
@@ -403,7 +403,7 @@ public class CachedIndexer implements Indexer, ContentListener {
     @UnsupportedUserUsage
     public synchronized void afterInsert(@NonNull Content content, int startLine, int startColumn, int endLine, int endColumn,
                                          @NonNull CharSequence insertedContent) {
-        for (var pos : cachedPositions) {
+        for (CharPosition pos : cachedPositions) {
             if (pos.line == startLine) {
                 if (pos.column >= startColumn) {
                     pos.index += insertedContent.length();

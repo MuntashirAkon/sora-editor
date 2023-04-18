@@ -63,13 +63,13 @@ public class ContentBidi implements ContentListener {
         }
         synchronized (this) {
             for (int i = 0; i < entries.length; i++) {
-                var entry = entries[i];
+                DirectionsEntry entry = entries[i];
                 if (entry != null && entry.line == line) {
                     return entry.dir;
                 }
             }
         }
-        var dir = TextBidi.getDirections(text.getLine(line));
+        Directions dir = TextBidi.getDirections(text.getLine(line));
         synchronized (this) {
             System.arraycopy(entries, 0, entries, 1, entries.length - 1);
             entries[0] = new DirectionsEntry(dir, line);
@@ -79,9 +79,9 @@ public class ContentBidi implements ContentListener {
 
     @Override
     public synchronized void afterDelete(@NonNull Content content, int startLine, int startColumn, int endLine, int endColumn, @NonNull CharSequence deletedContent) {
-        var delta = endLine - startLine;
+        int delta = endLine - startLine;
         for (int i = 0; i < entries.length; i++) {
-            var entry = entries[i];
+            DirectionsEntry entry = entries[i];
             if (entry == null) {
                 continue;
             }
@@ -97,9 +97,9 @@ public class ContentBidi implements ContentListener {
 
     @Override
     public synchronized void afterInsert(@NonNull Content content, int startLine, int startColumn, int endLine, int endColumn, @NonNull CharSequence insertedContent) {
-        var delta = endLine - startLine;
+        int delta = endLine - startLine;
         for (int i = 0; i < entries.length; i++) {
-            var entry = entries[i];
+            DirectionsEntry entry = entries[i];
             if (entry == null) {
                 continue;
             }

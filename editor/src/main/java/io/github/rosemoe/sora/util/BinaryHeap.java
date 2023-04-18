@@ -97,7 +97,7 @@ public class BinaryHeap {
     public void ensureCapacity(int capacity) {
         capacity++;
         if (nodes.length < capacity) {
-            var origin = nodes;
+            long[] origin = nodes;
             if (nodes.length << 1 >= capacity) {
                 nodes = new long[nodes.length << 1];
             } else {

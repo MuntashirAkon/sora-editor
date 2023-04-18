@@ -28,6 +28,7 @@ import org.eclipse.lsp4j.CompletionItem;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import io.github.rosemoe.sora.lsp.client.languageserver.requestmanager.RequestManager;
 import io.github.rosemoe.sora.lsp.editor.LspEditor;
 import io.github.rosemoe.sora.lsp.operations.Provider;
 import io.github.rosemoe.sora.lsp.utils.LspUtils;
@@ -60,7 +61,7 @@ public class CompletionProvider implements Provider<CharPosition, CompletableFut
             future = null;
         }
 
-        var manager = editor.getRequestManager();
+        RequestManager manager = editor.getRequestManager();
 
         if (manager == null) {
             return null;

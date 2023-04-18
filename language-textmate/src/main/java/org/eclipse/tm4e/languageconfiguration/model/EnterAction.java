@@ -96,7 +96,7 @@ public class EnterAction {
 	}
 
 	public EnterAction copy() {
-		var copy = new EnterAction(indentAction);
+		EnterAction copy = new EnterAction(indentAction);
 		copy.appendText = appendText;
 		copy.removeText = removeText;
 		return copy;

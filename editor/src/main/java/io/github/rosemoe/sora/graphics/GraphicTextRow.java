@@ -142,11 +142,11 @@ public class GraphicTextRow {
         }
         measureTextInternal(textStart, textEnd, text.widthCache);
         // Generate prefix sum
-        var cache = text.widthCache;
-        var pending = cache[0];
+        float[] cache = text.widthCache;
+        float pending = cache[0];
         cache[0] = 0f;
         for (int i = 1; i <= textEnd; i++) {
-            var tmp = cache[i];
+            float tmp = cache[i];
             cache[i] = cache[i - 1] + pending;
             pending = tmp;
         }
@@ -162,17 +162,17 @@ public class GraphicTextRow {
      */
     public float[] findOffsetByAdvance(int start, float advance) {
         if (text.widthCache != null && useCache) {
-            var cache = text.widthCache;
-            var end = textEnd;
+            float[] cache = text.widthCache;
+            int end = textEnd;
             int left = start, right = end;
-            var base = cache[start];
+            float base = cache[start];
             while (left <= right) {
-                var mid = (left + right) / 2;
+                int mid = (left + right) / 2;
                 if (mid < start || mid >= end) {
                     left = mid;
                     break;
                 }
-                var value = cache[mid] - base;
+                float value = cache[mid] - base;
                 if (value > advance) {
                     right = mid - 1;
                 } else if (value < advance) {
@@ -190,14 +190,14 @@ public class GraphicTextRow {
             buffer[1] = cache[left] - base;
             return buffer;
         }
-        var regionItr = new TextRegionIterator(textEnd, spans, softBreaks);
+        TextRegionIterator regionItr = new TextRegionIterator(textEnd, spans, softBreaks);
         float currentPosition = 0f;
         // Find in each region
-        var lastStyle = 0L;
-        var chars = text.value;
+        long lastStyle = 0L;
+        char[] chars = text.value;
         float tabAdvance = paint.getSpaceWidth() * tabWidth;
         int offset = start;
-        var first = true;
+        boolean first = true;
         while (regionItr.hasNextRegion() && currentPosition < advance) {
             if (first) {
                 regionItr.requireStartOffset(start);
@@ -205,10 +205,10 @@ public class GraphicTextRow {
             } else {
                 regionItr.nextRegion();
             }
-            var regionStart = regionItr.getStartIndex();
-            var regionEnd = regionItr.getEndIndex();
+            int regionStart = regionItr.getStartIndex();
+            int regionEnd = regionItr.getEndIndex();
             regionEnd = Math.min(textEnd, regionEnd);
-            var style = regionItr.getSpan().getStyleBits();
+            long style = regionItr.getSpan().getStyleBits();
             if (style != lastStyle) {
                 if (isBold(style) != isBold(lastStyle)) {
                     paint.setFakeBoldText(isBold(style));
@@ -286,7 +286,7 @@ public class GraphicTextRow {
                 Log.w("GraphicTextRow", "start > end. if this is caused by editor, please provide feedback", new Throwable());
             return 0f;
         }
-        var cache = text.widthCache;
+        float[] cache = text.widthCache;
         if (cache != null && useCache && end < cache.length) {
             return cache[end] - cache[start];
         }
@@ -295,16 +295,16 @@ public class GraphicTextRow {
 
     private float measureTextInternal(int start, int end, float[] widths) {
         // Backup values
-        final var originalBold = paint.isFakeBoldText();
-        final var originalSkew = paint.getTextSkewX();
+        final boolean originalBold = paint.isFakeBoldText();
+        final float originalSkew = paint.getTextSkewX();
 
         start = Math.max(start, textStart);
         end = Math.min(end, textEnd);
-        var regionItr = new TextRegionIterator(end, spans, softBreaks);
+        TextRegionIterator regionItr = new TextRegionIterator(end, spans, softBreaks);
         float width = 0f;
         // Measure for each region
-        var lastStyle = 0L;
-        var first = true;
+        long lastStyle = 0L;
+        boolean first = true;
         while (regionItr.hasNextRegion()) {
             if (first) {
                 regionItr.requireStartOffset(start);
@@ -312,13 +312,13 @@ public class GraphicTextRow {
             } else {
                 regionItr.nextRegion();
             }
-            var regionStart = regionItr.getStartIndex();
-            var regionEnd = regionItr.getEndIndex();
+            int regionStart = regionItr.getStartIndex();
+            int regionEnd = regionItr.getEndIndex();
             regionEnd = Math.min(end, regionEnd);
             if (regionStart > regionEnd || (regionStart == regionEnd && regionEnd >= end)) {
                 break;
             }
-            var style = regionItr.getSpan().getStyleBits();
+            long style = regionItr.getSpan().getStyleBits();
             if (style != lastStyle) {
                 if (isBold(style) != isBold(lastStyle)) {
                     paint.setFakeBoldText(isBold(style));
@@ -346,7 +346,7 @@ public class GraphicTextRow {
         if (start >= end) {
             return 0f;
         }
-        var dirs = directions == null ?
+        Directions dirs = directions == null ?
                 (text.mayNeedBidi() ? TextBidi.getDirections(text) : tmpDirections)
                 : directions;
         float width = 0;

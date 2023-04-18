@@ -182,7 +182,7 @@ public class ContentLine implements CharSequence, GetChars, BidiRequirementCheck
         System.arraycopy(value, dstOffset, value, dstOffset + len,
                 length - dstOffset);
         for (int i = start; i < end; i++) {
-            var ch = s.charAt(i);
+            char ch = s.charAt(i);
             value[dstOffset++] = ch;
             if (TextBidi.couldAffectRtl(ch)) {
                 rtlAffectingCount++;
@@ -264,7 +264,7 @@ public class ContentLine implements CharSequence, GetChars, BidiRequirementCheck
     public char charAt(int index) {
         // checkIndex(index);
         if (index >= length) {
-            var separator = getLineSeparator();
+            LineSeparator separator = getLineSeparator();
             return separator.getLength() > 0 ? getLineSeparator().getContent().charAt(index - length) : '\n';
         }
         return value[index];
@@ -280,7 +280,7 @@ public class ContentLine implements CharSequence, GetChars, BidiRequirementCheck
         }
         char[] newValue = new char[end - start + 16];
         System.arraycopy(value, start, newValue, 0, end - start);
-        var res = new ContentLine(false);
+        ContentLine res = new ContentLine(false);
         res.value = newValue;
         res.length = end - start;
 

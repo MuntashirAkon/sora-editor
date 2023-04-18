@@ -64,13 +64,13 @@ public class LineBreakLayout extends AbstractLayout {
         if (text == null) {
             return;
         }
-        var shadowPaint = new Paint(editor.isRenderFunctionCharacters());
+        Paint shadowPaint = new Paint(editor.isRenderFunctionCharacters());
         shadowPaint.set(editor.getTextPaint());
         shadowPaint.onAttributeUpdate();
-        var reuseCountLocal = reuseCount.get();
-        var measurerLocal = measurer;
-        final var monitor = new TaskMonitor(1, (results, cancelledCount) -> {
-            final var editor = this.editor;
+        int reuseCountLocal = reuseCount.get();
+        SingleCharacterWidths measurerLocal = measurer;
+        final TaskMonitor monitor = new TaskMonitor(1, (results, cancelledCount) -> {
+            final CodeEditor editor = this.editor;
             if (editor == null || cancelledCount > 0) {
                 return;
             }
@@ -84,14 +84,14 @@ public class LineBreakLayout extends AbstractLayout {
                 editor.getEventHandler().scrollBy(0, 0);
             });
         });
-        var task = new LayoutTask<Void>(monitor) {
+        LayoutTask<Void> task = new LayoutTask<Void>(monitor) {
             @Override
             protected Void compute() {
                 widthMaintainer.lock.lock();
                 try {
                     editor.setLayoutBusy(true);
                     text.runReadActionsOnLines(0, text.getLineCount() - 1, (int index, ContentLine line, Content.ContentLineConsumer2.AbortFlag abortFlag) -> {
-                        var width = (int) measurerLocal.measureText(line, 0, line.length(), shadowPaint);
+                        int width = (int) measurerLocal.measureText(line, 0, line.length(), shadowPaint);
                         if (shouldRun()) {
                             widthMaintainer.add(width);
                         } else {
@@ -170,7 +170,7 @@ public class LineBreakLayout extends AbstractLayout {
     @NonNull
     @Override
     public Row getRowAt(int rowIndex) {
-        var row = new Row();
+        Row row = new Row();
         row.lineIndex = rowIndex;
         row.startColumn = 0;
         row.isLeadingRow = true;
@@ -296,7 +296,7 @@ public class LineBreakLayout extends AbstractLayout {
                 throw new NoSuchElementException();
             }
             result.lineIndex = currentRow;
-            var line = preloadedLines != null ? preloadedLines.get(currentRow) : null;
+            ContentLine line = preloadedLines != null ? preloadedLines.get(currentRow) : null;
             if (line == null) {
                 line = text.getLine(currentRow);
             }

@@ -58,7 +58,7 @@ public final class RuleId {
 			return false;
 		if (RuleId.class != obj.getClass())
 			return false;
-		final var other = (RuleId) obj;
+		final RuleId other = (RuleId) obj;
 		return id == other.id;
 	}
 

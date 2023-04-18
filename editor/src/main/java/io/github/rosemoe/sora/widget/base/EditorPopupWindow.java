@@ -188,10 +188,10 @@ public class EditorPopupWindow {
             return;
         }
         boolean autoScroll = isFeatureEnabled(FEATURE_SCROLL_AS_CONTENT);
-        var left = autoScroll ? (windowX - editor.getOffsetX()) : (windowX - offsetX);
-        var top = autoScroll ? (windowY - editor.getOffsetY()) : (windowY - offsetY);
-        var right = left + width;
-        var bottom = top + height;
+        int left = autoScroll ? (windowX - editor.getOffsetX()) : (windowX - offsetX);
+        int top = autoScroll ? (windowY - editor.getOffsetY()) : (windowY - offsetY);
+        int right = left + width;
+        int bottom = top + height;
         if (!isFeatureEnabled(FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED)) {
             // Adjust positions
             left = wrapHorizontal(left);

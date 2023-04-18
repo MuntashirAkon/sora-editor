@@ -56,8 +56,8 @@ public class TransformApplier {
         if (transform == null) {
             return text;
         }
-        var sb = new StringBuilder();
-        var matcher = transform.regexp.matcher(text);
+        StringBuilder sb = new StringBuilder();
+        Matcher matcher = transform.regexp.matcher(text);
         int loopCount = 0;
         int limit = transform.globalMode ? Integer.MAX_VALUE : 1;
         int nextIndex = 0;
@@ -87,14 +87,14 @@ public class TransformApplier {
      * @return generated(transform) text
      */
     private static CharSequence applySingle(Matcher matcher, List<FormatString> formatStringList) {
-        var sb = new StringBuilder();
-        var nextUpperCase = false;
+        StringBuilder sb = new StringBuilder();
+        boolean nextUpperCase = false;
         for (FormatString formatString : formatStringList) {
             if (formatString instanceof NoFormat) {
                 sb.append(applyFirstUpperCase(((NoFormat) formatString).getText(), nextUpperCase));
             } else if (formatString instanceof ConditionalFormat) {
-                var format = (ConditionalFormat) formatString;
-                var group = matcher.group(format.getGroup());
+                ConditionalFormat format = (ConditionalFormat) formatString;
+                String group = matcher.group(format.getGroup());
                 if (format.getShorthand() != null) {
                     if (group != null) {
                         switch (format.getShorthand()) {
@@ -110,8 +110,8 @@ public class TransformApplier {
                         }
                     }
                 } else {
-                    var ifValue = format.getIfValue() != null ? format.getIfValue() : group;
-                    var elseValue = format.getElseValue() != null ? format.getElseValue() : "";
+                    String ifValue = format.getIfValue() != null ? format.getIfValue() : group;
+                    String elseValue = format.getElseValue() != null ? format.getElseValue() : "";
                     sb.append(applyFirstUpperCase(group != null ? ifValue : elseValue, nextUpperCase));
                 }
             }

@@ -156,9 +156,9 @@ public abstract class SimpleAnalyzeManager<V> implements AnalyzeManager {
             Log.v(LOG_TAG, "Analyze thread started");
             try {
                 while (!isInterrupted()) {
-                    var text = ref;
+                    ContentReference text = ref;
                     if (text != null) {
-                        var requestId = 0L;
+                        long requestId = 0L;
                         Styles result = null;
                         V newData = null;
                         // Do the analysis, until the requestId matches
@@ -168,7 +168,7 @@ public abstract class SimpleAnalyzeManager<V> implements AnalyzeManager {
                                 break;
                             }
                             requestId = newestRequestId;
-                            var delegate = new Delegate<V>(requestId);
+                            Delegate<V> delegate = new Delegate<V>(requestId);
 
                             // Collect line contents
                             textContainer.setLength(0);
@@ -185,7 +185,7 @@ public abstract class SimpleAnalyzeManager<V> implements AnalyzeManager {
                             newData = delegate.data;
                         } while (requestId != newestRequestId);
                         // Send result
-                        final var receiver = SimpleAnalyzeManager.this.receiver;
+                        final StyleReceiver receiver = SimpleAnalyzeManager.this.receiver;
                         if (receiver != null && result != null) {
                             receiver.setStyles(SimpleAnalyzeManager.this, result);
                         }

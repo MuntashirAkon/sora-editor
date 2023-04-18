@@ -42,14 +42,17 @@ import io.github.rosemoe.sora.lang.styling.CodeBlock;
 import io.github.rosemoe.sora.lang.styling.Span;
 import io.github.rosemoe.sora.lang.styling.TextStyle;
 import io.github.rosemoe.sora.langs.textmate.folding.FoldingHelper;
+import io.github.rosemoe.sora.langs.textmate.folding.FoldingRegions;
 import io.github.rosemoe.sora.langs.textmate.folding.IndentRange;
 import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry;
 import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel;
 import io.github.rosemoe.sora.langs.textmate.utils.StringUtils;
 import io.github.rosemoe.sora.text.Content;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tm4e.core.grammar.IGrammar;
 
+import org.eclipse.tm4e.core.grammar.ITokenizeLineResult;
 import org.eclipse.tm4e.core.internal.grammar.tokenattrs.EncodedTokenAttributes;
 import org.eclipse.tm4e.core.internal.grammar.tokenattrs.StandardTokenType;
 import org.eclipse.tm4e.core.internal.oniguruma.OnigRegExp;
@@ -57,6 +60,8 @@ import org.eclipse.tm4e.core.internal.oniguruma.OnigResult;
 import org.eclipse.tm4e.core.internal.oniguruma.OnigString;
 import org.eclipse.tm4e.core.internal.theme.FontStyle;
 import org.eclipse.tm4e.core.internal.theme.Theme;
+import org.eclipse.tm4e.languageconfiguration.model.CharacterPair;
+import org.eclipse.tm4e.languageconfiguration.model.FoldingRules;
 import org.eclipse.tm4e.languageconfiguration.model.LanguageConfiguration;
 
 import io.github.rosemoe.sora.text.ContentLine;
@@ -99,17 +104,17 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
 
         if (languageConfiguration != null) {
             configuration = languageConfiguration;
-            var pairs = languageConfiguration.getBrackets();
+            @Nullable List<CharacterPair> pairs = languageConfiguration.getBrackets();
             if (pairs != null && pairs.size() != 0) {
                 int size = pairs.size();
-                for (var pair : pairs) {
+                for (CharacterPair pair : pairs) {
                     if (pair.open.length() != 1 || pair.close.length() != 1) {
                         size--;
                     }
                 }
-                var pairArr = new char[size * 2];
+                char[] pairArr = new char[size * 2];
                 int i = 0;
-                for (var pair : pairs) {
+                for (CharacterPair pair : pairs) {
                     if (pair.open.length() != 1 || pair.close.length() != 1) {
                         continue;
                     }
@@ -130,7 +135,7 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
         if (configuration == null) {
             return;
         }
-        var markers = configuration.getFolding();
+        @Nullable FoldingRules markers = configuration.getFolding();
         if (markers == null) return;
         foldingOffside = markers.offSide;
         cachedRegExp = new OnigRegExp("(" + markers.markersStart + ")|(?:" + markers.markersEnd + ")");
@@ -164,7 +169,7 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
 
     @Override
     public List<CodeBlock> computeBlocks(Content text, CodeBlockAnalyzeDelegate delegate) {
-        var list = new ArrayList<CodeBlock>();
+        ArrayList<CodeBlock> list = new ArrayList<CodeBlock>();
         analyzeCodeBlocks(text, list, delegate);
         if (delegate.isNotCancelled()) {
             withReceiver(r -> r.updateBracketProvider(this, bracketsProvider));
@@ -177,7 +182,7 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
             return;
         }
         try {
-            var foldingRegions = IndentRange.computeRanges(model, language.getTabSize(), foldingOffside, this, cachedRegExp, delegate);
+            FoldingRegions foldingRegions = IndentRange.computeRanges(model, language.getTabSize(), foldingOffside, this, cachedRegExp, delegate);
             blocks.ensureCapacity(foldingRegions.length());
             for (int i = 0; i < foldingRegions.length() && delegate.isNotCancelled(); i++) {
                 int startLine = foldingRegions.getStartLineNumber(i);
@@ -189,8 +194,8 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
                     codeBlock.endLine = endLine;
 
                     // It's safe here to use raw data because the Content is only held by this thread
-                    var length = model.getColumnCount(startLine);
-                    var chars = model.getLine(startLine).getRawData();
+                    int length = model.getColumnCount(startLine);
+                    char[] chars = model.getLine(startLine).getRawData();
 
                     codeBlock.startColumn = IndentRange.computeStartColumn(chars, length, language.getTabSize());
                     codeBlock.endColumn = codeBlock.startColumn;
@@ -208,11 +213,11 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
     @SuppressLint("NewApi")
     public synchronized LineTokenizeResult<MyState, Span> tokenizeLine(CharSequence lineC, MyState state, int lineIndex) {
         String line = (lineC instanceof ContentLine) ? ((ContentLine) lineC).toStringWithNewline() : lineC.toString();
-        var tokens = new ArrayList<Span>();
-        var surrogate = StringUtils.checkSurrogate(line);
-        var lineTokens = grammar.tokenizeLine2(line, state == null ? null : state.tokenizeState, Duration.ofSeconds(2));
+        ArrayList<Span> tokens = new ArrayList<Span>();
+        boolean surrogate = StringUtils.checkSurrogate(line);
+        ITokenizeLineResult<int[]> lineTokens = grammar.tokenizeLine2(line, state == null ? null : state.tokenizeState, Duration.ofSeconds(2));
         int tokensLength = lineTokens.getTokens().length / 2;
-        var identifiers = language.createIdentifiers ? new ArrayList<String>() : null;
+        ArrayList<String> identifiers = language.createIdentifiers ? new ArrayList<String>() : null;
         for (int i = 0; i < tokensLength; i++) {
             int startIndex = StringUtils.convertUnicodeOffsetToUtf16(line, lineTokens.getTokens()[2 * i], surrogate);
             if (i == 0 && startIndex != 0) {
@@ -221,13 +226,13 @@ public class TextMateAnalyzer extends AsyncIncrementalAnalyzeManager<MyState, Sp
             int metadata = lineTokens.getTokens()[2 * i + 1];
             int foreground = EncodedTokenAttributes.getForeground(metadata);
             int fontStyle = EncodedTokenAttributes.getFontStyle(metadata);
-            var tokenType = EncodedTokenAttributes.getTokenType(metadata);
+            int tokenType = EncodedTokenAttributes.getTokenType(metadata);
             if (language.createIdentifiers) {
 
                 if (tokenType == StandardTokenType.Other) {
-                    var end = i + 1 == tokensLength ? lineC.length() : StringUtils.convertUnicodeOffsetToUtf16(line, lineTokens.getTokens()[2 * (i + 1)], surrogate);
+                    int end = i + 1 == tokensLength ? lineC.length() : StringUtils.convertUnicodeOffsetToUtf16(line, lineTokens.getTokens()[2 * (i + 1)], surrogate);
                     if (end > startIndex && MyCharacter.isJavaIdentifierStart(line.charAt(startIndex))) {
-                        var flag = true;
+                        boolean flag = true;
                         for (int j = startIndex + 1; j < end; j++) {
                             if (!MyCharacter.isJavaIdentifierPart(line.charAt(j))) {
                                 flag = false;

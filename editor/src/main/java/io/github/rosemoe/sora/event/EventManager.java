@@ -176,10 +176,10 @@ public final class EventManager {
      */
     @NonNull
     public <T extends Event> SubscriptionReceipt<T> subscribeEvent(@NonNull Class<T> eventType, @NonNull EventReceiver<T> receiver) {
-        var receivers = getReceivers(eventType);
+        Receivers<T> receivers = getReceivers(eventType);
         receivers.lock.writeLock().lock();
         try {
-            var list = receivers.receivers;
+            List<EventReceiver<T>> list = receivers.receivers;
             if (list.contains(receiver)) {
                 // Simply detect if the event receiver has been added and return the SubscriptionReceipt directly.
                 // Even if add multiple subscription, actually send an event, the event receiver will only receive an event once.
@@ -207,7 +207,7 @@ public final class EventManager {
             return event.getInterceptTargets();
         }
         // Safe cast
-        var receivers = getReceivers((Class<T>) event.getClass());
+        Receivers<T> receivers = getReceivers((Class<T>) event.getClass());
         receivers.lock.readLock().lock();
         EventReceiver<T>[] receiverArr;
         int count;
@@ -222,7 +222,7 @@ public final class EventManager {
         try {
             Unsubscribe unsubscribe = new Unsubscribe();
             for (int i = 0; i < count && (event.getInterceptTargets() & InterceptTarget.TARGET_RECEIVERS) == 0; i++) {
-                var receiver = receiverArr[i];
+                EventReceiver<T> receiver = receiverArr[i];
                 receiver.onReceive(event, unsubscribe);
                 if (unsubscribe.isUnsubscribed()) {
                     if (unsubscribedReceivers == null) {

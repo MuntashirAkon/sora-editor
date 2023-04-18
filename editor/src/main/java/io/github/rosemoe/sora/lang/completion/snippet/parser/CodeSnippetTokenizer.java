@@ -52,7 +52,7 @@ public class CodeSnippetTokenizer {
         }
         char ch = value.charAt(index);
 
-        var staticType = staticTypes.get(ch);
+        TokenType staticType = staticTypes.get(ch);
         if (staticType != null) {
             length = 1;
             return staticType;

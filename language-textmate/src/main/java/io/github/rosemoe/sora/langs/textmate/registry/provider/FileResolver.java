@@ -40,7 +40,7 @@ public interface FileResolver {
     }
 
     FileResolver DEFAULT = path -> {
-        var file = new File(path);
+        File file = new File(path);
         if (file.isFile()) {
             try {
                 return new FileInputStream(file);

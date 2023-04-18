@@ -73,25 +73,25 @@ public class ContentIO {
      */
     @NonNull
     public static Content createFrom(@NonNull Reader reader) throws IOException {
-        var content = new Content();
+        Content content = new Content();
         content.setUndoEnabled(false);
-        var buffer = new char[BUFFER_SIZE];
-        var wrapper = new CharArrayWrapper(buffer, 0);
+        char[] buffer = new char[BUFFER_SIZE];
+        CharArrayWrapper wrapper = new CharArrayWrapper(buffer, 0);
         int count;
         while ((count = reader.read(buffer)) != -1) {
             if (count > 0) {
                 if (buffer[count - 1] == '\r') {
-                    var peek = reader.read();
+                    int peek = reader.read();
                     if (peek == '\n') {
                         wrapper.setDataCount(count - 1);
-                        var line = content.getLineCount() - 1;
+                        int line = content.getLineCount() - 1;
                         content.insert(line, content.getColumnCount(line), wrapper);
                         line = content.getLineCount() - 1;
                         content.insert(line, content.getColumnCount(line), "\r\n");
                         continue;
                     } else if (peek != -1) {
                         wrapper.setDataCount(count);
-                        var line = content.getLineCount() - 1;
+                        int line = content.getLineCount() - 1;
                         content.insert(line, content.getColumnCount(line), wrapper);
                         line = content.getLineCount() - 1;
                         content.insert(line, content.getColumnCount(line), String.valueOf((char) peek));
@@ -99,7 +99,7 @@ public class ContentIO {
                     }
                 }
                 wrapper.setDataCount(count);
-                var line = content.getLineCount() - 1;
+                int line = content.getLineCount() - 1;
                 content.insert(line, content.getColumnCount(line), wrapper);
             }
         }
@@ -142,7 +142,7 @@ public class ContentIO {
      */
     public static void writeTo(@NonNull Content text, @NonNull Writer writer, boolean closeOnSucceed) throws IOException {
         // Use buffered writer to avoid frequently IO when there are a lot of short lines
-        final var buffered = (writer instanceof BufferedWriter) ? (BufferedWriter)writer : new BufferedWriter(writer, BUFFER_SIZE);
+        final BufferedWriter buffered = (writer instanceof BufferedWriter) ? (BufferedWriter)writer : new BufferedWriter(writer, BUFFER_SIZE);
         try {
             text.runReadActionsOnLines(0, text.getLineCount() - 1, (Content.ContentLineConsumer2) (index, line, flag) -> {
                 try {
@@ -156,7 +156,7 @@ public class ContentIO {
                 }
             });
         } catch (RuntimeException e) {
-            var cause = e.getCause();
+            Throwable cause = e.getCause();
             if (cause instanceof IOException) {
                 throw (IOException) cause;
             } else {

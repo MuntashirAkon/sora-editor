@@ -57,8 +57,8 @@ public class MatchHelper {
 
     public Spanned startsWith(CharSequence name, CharSequence pattern, boolean matchFirstCase, boolean ignoreCase) {
         if (name.length() >= pattern.length()) {
-            final var len = pattern.length();
-            var matches = true;
+            final int len = pattern.length();
+            boolean matches = true;
             for (int i = 0; i < len; i++) {
                 char a = name.charAt(i);
                 char b = pattern.charAt(i);
@@ -68,7 +68,7 @@ public class MatchHelper {
                 }
             }
             if (matches) {
-                var spanned = new SpannableString(name);
+                SpannableString spanned = new SpannableString(name);
                 spanned.setSpan(new ForegroundColorSpan(highlightColor), 0, len, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 return spanned;
             }
@@ -83,7 +83,7 @@ public class MatchHelper {
     public Spanned contains(CharSequence name, CharSequence pattern, boolean ignoreCase) {
         int index = TextUtils.indexOf(name, pattern, ignoreCase, 0);
         if (index != -1) {
-            var spanned = new SpannableString(name);
+            SpannableString spanned = new SpannableString(name);
             spanned.setSpan(new ForegroundColorSpan(highlightColor), index, index + pattern.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             return spanned;
         }
@@ -103,11 +103,11 @@ public class MatchHelper {
     public Spanned commonSub(CharSequence name, CharSequence pattern, boolean ignoreCase) {
         if (name.length() >= pattern.length()) {
             SpannableString spanned = null;
-            var len = pattern.length();
+            int len = pattern.length();
             int j = 0;
             for (int i = 0; i < len; i++) {
                 char p = pattern.charAt(i);
-                var matched = false;
+                boolean matched = false;
                 for (; j < name.length() && !matched; j++) {
                     char s = name.charAt(j);
                     if (s == j || (ignoreCase && Character.toLowerCase(s) == Character.toLowerCase(p))) {

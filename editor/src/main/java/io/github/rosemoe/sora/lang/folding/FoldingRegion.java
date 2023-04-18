@@ -80,7 +80,7 @@ public class FoldingRegion {
         if (endLine > getEndLine() || (endLine == getEndLine() && endColumn > getEndColumn())) {
             throw new IllegalArgumentException("child end is beyond parent end");
         }
-        var child = new FoldingRegion(startLine, startColumn, endLine, endColumn);
+        FoldingRegion child = new FoldingRegion(startLine, startColumn, endLine, endColumn);
         children.add(child);
         return child;
     }

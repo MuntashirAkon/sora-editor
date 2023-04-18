@@ -45,7 +45,7 @@ public class CodeSnippet implements Cloneable {
 
     public boolean checkContent() {
         int index = 0;
-        for (var item : items) {
+        for (SnippetItem item : items) {
             if (item.getStartIndex() != index) {
                 return false;
             }
@@ -56,8 +56,8 @@ public class CodeSnippet implements Cloneable {
             }
             index = item.getEndIndex();
         }
-        var set = new TreeSet<Integer>();
-        for (var placeholder : placeholders) {
+        TreeSet<Integer> set = new TreeSet<Integer>();
+        for (PlaceholderDefinition placeholder : placeholders) {
             if (!set.contains(placeholder.getId())) {
                 set.add(placeholder.getId());
             } else {
@@ -78,16 +78,16 @@ public class CodeSnippet implements Cloneable {
     @NonNull
     @Override
     public CodeSnippet clone() {
-        var defs = new ArrayList<PlaceholderDefinition>(placeholders.size());
-        var map = new HashMap<PlaceholderDefinition, PlaceholderDefinition>();
+        ArrayList<PlaceholderDefinition> defs = new ArrayList<PlaceholderDefinition>(placeholders.size());
+        HashMap<PlaceholderDefinition, PlaceholderDefinition> map = new HashMap<PlaceholderDefinition, PlaceholderDefinition>();
         for (PlaceholderDefinition placeholder : placeholders) {
-            var n = new PlaceholderDefinition(placeholder.getId(), placeholder.getChoices(), placeholder.getElements(), placeholder.getTransform());
+            PlaceholderDefinition n = new PlaceholderDefinition(placeholder.getId(), placeholder.getChoices(), placeholder.getElements(), placeholder.getTransform());
             defs.add(n);
             map.put(placeholder, n);
         }
-        var itemsClone = new ArrayList<SnippetItem>(items.size());
+        ArrayList<SnippetItem> itemsClone = new ArrayList<SnippetItem>(items.size());
         for (SnippetItem item : items) {
-            var n = item.clone();
+            SnippetItem n = item.clone();
             itemsClone.add(n);
             if (n instanceof PlaceholderItem) {
                 if (map.get(((PlaceholderItem) n).getDefinition()) != null) {
@@ -115,7 +115,7 @@ public class CodeSnippet implements Cloneable {
         public Builder addPlainText(String text) {
             if (!items.isEmpty() && items.get(items.size() - 1) instanceof PlainTextItem) {
                 // Merge plain texts
-                var item = (PlainTextItem) items.get(items.size() - 1);
+                PlainTextItem item = (PlainTextItem) items.get(items.size() - 1);
                 item.setText(item.getText() + text);
                 item.setIndex(item.getStartIndex(), item.getEndIndex() + text.length());
                 index += text.length();
@@ -143,7 +143,7 @@ public class CodeSnippet implements Cloneable {
             }
             addPlaceholder(id, choices.get(0));
             PlaceholderDefinition def = null;
-            for (var definition : definitions) {
+            for (PlaceholderDefinition definition : definitions) {
                 if (definition.getId() == id) {
                     def = definition;
                     break;
@@ -159,7 +159,7 @@ public class CodeSnippet implements Cloneable {
             }
             addPlaceholder(id);
             PlaceholderDefinition def = null;
-            for (var definition : definitions) {
+            for (PlaceholderDefinition definition : definitions) {
                 if (definition.getId() == id) {
                     def = definition;
                     break;
@@ -170,7 +170,7 @@ public class CodeSnippet implements Cloneable {
         }
 
         public Builder addPlaceholder(int id, String defaultValue) {
-            final var elements = new ArrayList<PlaceHolderElement>();
+            final ArrayList<PlaceHolderElement> elements = new ArrayList<PlaceHolderElement>();
             if (!android.text.TextUtils.isEmpty(defaultValue)) {
                 elements.add(new PlainPlaceholderElement(defaultValue));
             }
@@ -179,7 +179,7 @@ public class CodeSnippet implements Cloneable {
 
         public Builder addComplexPlaceholder(int id, List<PlaceHolderElement> elements) {
             PlaceholderDefinition def = null;
-            for (var definition : definitions) {
+            for (PlaceholderDefinition definition : definitions) {
                 if (definition.getId() == id) {
                     def = definition;
                     break;
@@ -192,7 +192,7 @@ public class CodeSnippet implements Cloneable {
 
             def.getElements().addAll(elements);
 
-            var item = new PlaceholderItem(def, index);
+            PlaceholderItem item = new PlaceholderItem(def, index);
             items.add(item);
             return this;
         }

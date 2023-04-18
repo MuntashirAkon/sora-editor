@@ -51,10 +51,10 @@ public class SubscriptionReceipt<R extends Event> {
      * Does nothing if the listener is already recycled or unsubscribed.
      */
     public void unsubscribe() {
-        var receivers = manager.getReceivers(clazz);
+        EventManager.Receivers<R> receivers = manager.getReceivers(clazz);
         receivers.lock.writeLock().lock();
         try {
-            var target = receiver.get();
+            EventReceiver<R> target = receiver.get();
             if (target != null) {
                 receivers.receivers.remove(target);
             }

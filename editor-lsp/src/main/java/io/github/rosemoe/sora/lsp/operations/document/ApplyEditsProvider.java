@@ -25,6 +25,7 @@ package io.github.rosemoe.sora.lsp.operations.document;
 
 import android.util.Pair;
 
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 
 import java.util.List;
@@ -41,19 +42,19 @@ public class ApplyEditsProvider extends RunOnlyProvider<Pair<List<? extends Text
     @Override
     public void run(Pair<List<? extends TextEdit>, Content> contentPair) {
 
-        var editList = contentPair.first;
-        var content = contentPair.second;
+        List<? extends TextEdit> editList = contentPair.first;
+        Content content = contentPair.second;
 
         editList.forEach(textEdit -> {
-            var range = textEdit.getRange();
-            var text = textEdit.getNewText();
-            var startIndex = content.getCharIndex(range.getStart().getLine(), range.getStart().getCharacter());
-            var endIndex = content.getCharIndex(range.getEnd().getLine(), range.getEnd().getCharacter());
+            Range range = textEdit.getRange();
+            String text = textEdit.getNewText();
+            int startIndex = content.getCharIndex(range.getStart().getLine(), range.getStart().getCharacter());
+            int endIndex = content.getCharIndex(range.getEnd().getLine(), range.getEnd().getCharacter());
 
             if (endIndex < startIndex) {
                 Logger.instance(this.getClass().getName())
                         .w("Invalid location information found applying edits from %s to %s", range.getStart(), range.getEnd());
-                var diff = startIndex - endIndex;
+                int diff = startIndex - endIndex;
                 endIndex = startIndex;
                 startIndex = endIndex - diff;
             }

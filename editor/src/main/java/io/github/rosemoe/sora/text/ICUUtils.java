@@ -46,7 +46,7 @@ public class ICUUtils {
      */
     public static long getWordEdges(CharSequence text, int offset, boolean useIcu) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && useIcu) {
-            var itr = BreakIterator.getWordInstance();
+            BreakIterator itr = BreakIterator.getWordInstance();
             itr.setText(new CharSequenceIterator(text));
             int end = itr.following(offset);
             int start = itr.previous();

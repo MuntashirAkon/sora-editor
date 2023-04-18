@@ -100,7 +100,7 @@ public class Paint extends android.graphics.Paint {
     public float myGetTextRunAdvances(@NonNull char[] chars, int index, int count, int contextIndex, int contextCount, boolean isRtl, @Nullable float[] advances, int advancesIndex, boolean fast) {
         if (fast) {
             ensureCacheObject();
-            var width = 0f;
+            float width = 0f;
             for (int i = 0; i < count; i++) {
                 char ch = chars[i + index];
                 float charWidth;
@@ -158,9 +158,9 @@ public class Paint extends android.graphics.Paint {
      */
     public int findOffsetByRunAdvance(ContentLine text, int start, int end, float advance, boolean useCache, boolean fast) {
         if (text.widthCache != null && useCache) {
-            var cache = text.widthCache;
-            var offset = start;
-            var currAdvance = 0f;
+            float[] cache = text.widthCache;
+            int offset = start;
+            float currAdvance = 0f;
             for (; offset < end && currAdvance < advance; offset++) {
                 currAdvance += cache[offset + 1] - cache[offset];
             }
@@ -171,7 +171,7 @@ public class Paint extends android.graphics.Paint {
         }
         if (fast) {
             ensureCacheObject();
-            var width = 0f;
+            float width = 0f;
             for (int i = start; i < end; i++) {
                 char ch = text.value[i];
                 float charWidth;

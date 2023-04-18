@@ -47,10 +47,10 @@ public class MappedSpans implements Spans {
 
     @Override
     public void adjustOnInsert(CharPosition start, CharPosition end) {
-        var startLine = start.line;
-        var endLine = end.line;
-        var startColumn = start.column;
-        var endColumn = end.column;
+        int startLine = start.line;
+        int endLine = end.line;
+        int startColumn = start.column;
+        int endColumn = end.column;
         if (startLine == endLine) {
             MappedSpanUpdater.shiftSpansOnSingleLineInsert(spanMap, startLine, startColumn, endColumn);
         } else {
@@ -60,10 +60,10 @@ public class MappedSpans implements Spans {
 
     @Override
     public void adjustOnDelete(CharPosition start, CharPosition end) {
-        var startLine = start.line;
-        var endLine = end.line;
-        var startColumn = start.column;
-        var endColumn = end.column;
+        int startLine = start.line;
+        int endLine = end.line;
+        int startColumn = start.column;
+        int endColumn = end.column;
         if (startLine == endLine) {
             MappedSpanUpdater.shiftSpansOnSingleLineDelete(spanMap, startLine, startColumn, endColumn);
         } else {
@@ -167,7 +167,7 @@ public class MappedSpans implements Spans {
          */
         public void determine(int line) {
             int mapLine = spans.size() - 1;
-            var extendedSpan = last;
+            Span extendedSpan = last;
             if (extendedSpan == null) {
                 extendedSpan = Span.obtain(0, EditorColorScheme.TEXT_NORMAL);
             }
@@ -233,10 +233,10 @@ public class MappedSpans implements Spans {
 
         @Override
         public void setSpansOnLine(int line, List<Span> spans) {
-            var last = spanMap.get(spanMap.size() - 1);
-            var extend = last.get(last.size() - 1);
+            List<Span> last = spanMap.get(spanMap.size() - 1);
+            Span extend = last.get(last.size() - 1);
             while (spanMap.size() <= line) {
-                var list = new ArrayList<Span>();
+                ArrayList<Span> list = new ArrayList<Span>();
                 list.add(extend.copy().setColumn(0));
                 spanMap.add(list);
             }

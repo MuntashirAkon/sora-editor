@@ -62,8 +62,8 @@ class EditorStyleDelegate implements StyleReceiver {
 
     void postUpdateBracketPair() {
         runOnUiThread(() -> {
-            final var provider = bracketsProvider;
-            final var editor = editorRef.get();
+            final BracketsProvider provider = bracketsProvider;
+            final CodeEditor editor = editorRef.get();
             if (provider != null && editor != null && !editor.getCursor().isSelected() && editor.isHighlightBracketPair()) {
                 foundPair = provider.getPairedBracketAt(editor.getText(), editor.getCursor().getLeft());
                 editor.invalidate();
@@ -82,7 +82,7 @@ class EditorStyleDelegate implements StyleReceiver {
     }
 
     private void runOnUiThread(Runnable operation) {
-        var editor = editorRef.get();
+        CodeEditor editor = editorRef.get();
         if (editor == null) {
             return;
         }
@@ -100,7 +100,7 @@ class EditorStyleDelegate implements StyleReceiver {
 
     @Override
     public void setStyles(@NonNull AnalyzeManager sourceManager, @Nullable Styles styles, @Nullable Runnable action) {
-        var editor = editorRef.get();
+        CodeEditor editor = editorRef.get();
         if (editor != null && sourceManager == editor.getEditorLanguage().getAnalyzeManager()) {
             runOnUiThread(() -> {
                 if (action != null) {
@@ -113,7 +113,7 @@ class EditorStyleDelegate implements StyleReceiver {
 
     @Override
     public void setDiagnostics(@NonNull AnalyzeManager sourceManager, @Nullable DiagnosticsContainer diagnostics) {
-        var editor = editorRef.get();
+        CodeEditor editor = editorRef.get();
         if (editor != null && sourceManager == editor.getEditorLanguage().getAnalyzeManager()) {
             runOnUiThread(() -> editor.setDiagnostics(diagnostics));
         }
@@ -121,7 +121,7 @@ class EditorStyleDelegate implements StyleReceiver {
 
     @Override
     public void updateBracketProvider(@NonNull AnalyzeManager sourceManager, @Nullable BracketsProvider provider) {
-        var editor = editorRef.get();
+        CodeEditor editor = editorRef.get();
         if (editor != null && sourceManager == editor.getEditorLanguage().getAnalyzeManager() && bracketsProvider != provider) {
             this.bracketsProvider = provider;
             postUpdateBracketPair();
@@ -130,7 +130,7 @@ class EditorStyleDelegate implements StyleReceiver {
 
     @Override
     public void updateStyles(@NonNull AnalyzeManager sourceManager, @NonNull Styles styles, @NonNull StyleUpdateRange range) {
-        var editor = editorRef.get();
+        CodeEditor editor = editorRef.get();
         if (editor != null && sourceManager == editor.getEditorLanguage().getAnalyzeManager()) {
             runOnUiThread(() -> editor.updateStyles(styles, range));
         }

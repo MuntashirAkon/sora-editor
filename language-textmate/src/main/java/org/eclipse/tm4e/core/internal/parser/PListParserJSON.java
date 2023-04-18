@@ -17,6 +17,7 @@ import java.io.Reader;
 import org.xml.sax.SAXException;
 
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 public final class PListParserJSON<T> implements PListParser<T> {
 
@@ -28,13 +29,13 @@ public final class PListParserJSON<T> implements PListParser<T> {
 
 	@Override
 	public T parse(final Reader contents) throws IOException, SAXException {
-		final var pList = new PListContentHandler<T>(objectFactory);
-		try (final var reader = new JsonReader(contents)) {
+		final PListContentHandler<T> pList = new PListContentHandler<T>(objectFactory);
+		try (final JsonReader reader = new JsonReader(contents)) {
 			 reader.setLenient(true);
 			boolean parsing = true;
 			pList.startElement(null, "plist", null, null);
 			while (parsing) {
-				final var nextToken = reader.peek();
+				final JsonToken nextToken = reader.peek();
 				switch (nextToken) {
 				case BEGIN_ARRAY:
 					pList.startElement(null, "array", null, null);

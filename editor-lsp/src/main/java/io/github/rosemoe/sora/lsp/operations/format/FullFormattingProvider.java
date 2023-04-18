@@ -29,6 +29,7 @@ import androidx.annotation.WorkerThread;
 
 import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.FormattingOptions;
+import org.eclipse.lsp4j.TextEdit;
 
 import java.util.List;
 import java.util.Optional;
@@ -73,12 +74,12 @@ public class FullFormattingProvider extends RunOnlyProvider<Content> {
             return;
         }
 
-        var formattingParams = new DocumentFormattingParams();
+        DocumentFormattingParams formattingParams = new DocumentFormattingParams();
         formattingParams.setOptions(editor.getProviderManager().getOption(FormattingOptions.class));
 
         formattingParams.setTextDocument(LspUtils.createTextDocumentIdentifier(editor.getCurrentFileUri()));
 
-        var formattingFuture = manager.formatting(formattingParams);
+        CompletableFuture<List<? extends TextEdit>> formattingFuture = manager.formatting(formattingParams);
 
         if (formattingFuture == null) {
             future = CompletableFuture.completedFuture(null);

@@ -32,6 +32,7 @@ import org.eclipse.tm4e.core.registry.IThemeSource;
 import org.eclipse.tm4e.core.registry.Registry;
 import org.eclipse.tm4e.languageconfiguration.model.LanguageConfiguration;
 
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashMap;
@@ -81,7 +82,7 @@ public class GrammarRegistry {
     }
 
     private void initThemeListener() {
-        var themeRegistry = ThemeRegistry.getInstance();
+        ThemeRegistry themeRegistry = ThemeRegistry.getInstance();
 
         ThemeRegistry.ThemeChangeListener themeChangeListener = newTheme -> {
             try {
@@ -103,7 +104,7 @@ public class GrammarRegistry {
 
     public IGrammar findGrammar(String scopeName, boolean findInParent) {
 
-        var grammar = registry.grammarForScopeName(scopeName);
+        @Nullable IGrammar grammar = registry.grammarForScopeName(scopeName);
 
         if (grammar != null) {
             return grammar;
@@ -141,7 +142,7 @@ public class GrammarRegistry {
 
     @Nullable
     public LanguageConfiguration findLanguageConfiguration(String scopeName, boolean findInParent) {
-        var languageConfiguration = languageConfigurationMap.get(scopeName);
+        LanguageConfiguration languageConfiguration = languageConfigurationMap.get(scopeName);
 
         if (languageConfiguration != null) {
             return languageConfiguration;
@@ -160,9 +161,9 @@ public class GrammarRegistry {
 
 
     public Pair<IGrammar, LanguageConfiguration> loadLanguageAndLanguageConfiguration(GrammarDefinition grammarDefinition) {
-        var grammar = loadGrammar(grammarDefinition);
+        IGrammar grammar = loadGrammar(grammarDefinition);
 
-        var languageConfiguration = findLanguageConfiguration(grammar.getScopeName(), false);
+        @Nullable LanguageConfiguration languageConfiguration = findLanguageConfiguration(grammar.getScopeName(), false);
 
         return Pair.create(grammar, languageConfiguration);
     }
@@ -181,7 +182,7 @@ public class GrammarRegistry {
     }
 
     public synchronized IGrammar loadGrammar(GrammarDefinition grammarDefinition) {
-        var languageName = grammarDefinition.getName();
+        String languageName = grammarDefinition.getName();
 
         if (grammarFileName2ScopeName.containsKey(languageName) && grammarDefinition.getScopeName() != null) {
             //loaded
@@ -189,7 +190,7 @@ public class GrammarRegistry {
         }
 
 
-        var grammar = doLoadGrammar(grammarDefinition);
+        IGrammar grammar = doLoadGrammar(grammarDefinition);
 
         if (grammarDefinition.getScopeName() != null) {
             grammarFileName2ScopeName.put(languageName, grammarDefinition.getScopeName());
@@ -203,17 +204,17 @@ public class GrammarRegistry {
 
     private synchronized IGrammar doLoadGrammar(GrammarDefinition grammarDefinition) {
 
-        var languageConfigurationPath = grammarDefinition.getLanguageConfiguration();
+        @Nullable String languageConfigurationPath = grammarDefinition.getLanguageConfiguration();
 
         if (languageConfigurationPath != null) {
 
-            var languageConfigurationStream = FileProviderRegistry.getInstance()
+            @Nullable InputStream languageConfigurationStream = FileProviderRegistry.getInstance()
                     .tryGetInputStream(languageConfigurationPath);
 
             if (languageConfigurationStream != null) {
 
 
-                var languageConfiguration = LanguageConfiguration.load(
+                @Nullable LanguageConfiguration languageConfiguration = LanguageConfiguration.load(
                         new InputStreamReader(languageConfigurationStream)
                 );
 
@@ -247,7 +248,7 @@ public class GrammarRegistry {
 
 
     private void prepareLoadGrammars(List<GrammarDefinition> grammarDefinitions) {
-        for (var grammar : grammarDefinitions) {
+        for (GrammarDefinition grammar : grammarDefinitions) {
             getOrPullGrammarId(grammar.getScopeName());
         }
     }
@@ -261,7 +262,7 @@ public class GrammarRegistry {
 
 
     private synchronized int getOrPullGrammarId(String scopeName) {
-        var id = scopeName2GrammarId.get(scopeName);
+        Integer id = scopeName2GrammarId.get(scopeName);
 
         if (id == null) {
             id = scopeName2GrammarId.size() + 2;
@@ -274,8 +275,8 @@ public class GrammarRegistry {
 
 
     private synchronized Map<String, Integer> findGrammarIds(Map<String, String> scopeName2LanguageName) {
-        var result = new HashMap<String, Integer>();
-        for (var entry : scopeName2LanguageName.entrySet()) {
+        HashMap<String, Integer> result = new HashMap<String, Integer>();
+        for (Map.Entry<String, String> entry : scopeName2LanguageName.entrySet()) {
             // scopeName (entry#getKey)
             result.put(entry.getKey(), getOrPullGrammarId(
                     getGrammarScopeName(entry.getValue())));
@@ -287,7 +288,7 @@ public class GrammarRegistry {
         if (scopeName2GrammarDefinition.containsKey(name)) {
             return name;
         }
-        var grammarName = grammarFileName2ScopeName.get(name);
+        String grammarName = grammarFileName2ScopeName.get(name);
         return grammarName == null ? name : grammarName;
     }
 

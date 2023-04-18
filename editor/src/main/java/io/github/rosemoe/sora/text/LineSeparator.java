@@ -109,7 +109,7 @@ public enum LineSeparator {
             return NONE;
         }
         if (end - start == 1) {
-            var ch = text.charAt(start);
+            char ch = text.charAt(start);
             if (ch == '\r') return CR;
             if (ch == '\n') return LF;
         }

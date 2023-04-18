@@ -99,19 +99,19 @@ public class RegionIterator {
      * @param i Index of provider
      */
     public int getRegionSourcePointer(int i) {
-        var pointerValue = pointers[i] < providers[i].getPointCount() ? providers[i].getPointAt(i) : max;
+        int pointerValue = pointers[i] < providers[i].getPointCount() ? providers[i].getPointAt(i) : max;
         return (endIndex <= pointerValue && pointerValue < max || pointerStates[i]) ? pointers[i] - 1 : pointers[i];
     }
 
     public int getPointerValue(int i, int j) {
-        var provider = providers[i];
+        RegionProvider provider = providers[i];
         if (j < 0) {
             return 0;
         }
         if (j >= provider.getPointCount()) {
             return max;
         }
-        var value = provider.getPointAt(j);
+        int value = provider.getPointAt(j);
         return Math.min(value, max);
     }
 

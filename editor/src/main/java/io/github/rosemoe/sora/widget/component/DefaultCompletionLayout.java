@@ -59,7 +59,7 @@ public class DefaultCompletionLayout implements CompletionLayout {
         this.enabledAnimation = enabledAnimation;
 
         if (enabledAnimation) {
-            var transition = new LayoutTransition();
+            LayoutTransition transition = new LayoutTransition();
             transition.enableTransitionType(LayoutTransition.CHANGING);
             transition.enableTransitionType(LayoutTransition.APPEARING);
             transition.enableTransitionType(LayoutTransition.DISAPPEARING);
@@ -90,7 +90,7 @@ public class DefaultCompletionLayout implements CompletionLayout {
     @NonNull
     @Override
     public View inflate(@NonNull Context context) {
-        var rootLayout = new LinearLayout(context);
+        LinearLayout rootLayout = new LinearLayout(context);
         rootView = rootLayout;
         listView = new ListView(context);
         progressBar = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
@@ -103,7 +103,7 @@ public class DefaultCompletionLayout implements CompletionLayout {
         rootLayout.addView(listView, new LinearLayout.LayoutParams(-1, -1));
 
         progressBar.setIndeterminate(true);
-        var progressBarLayoutParams = (LinearLayout.LayoutParams) progressBar.getLayoutParams();
+        LinearLayout.LayoutParams progressBarLayoutParams = (LinearLayout.LayoutParams) progressBar.getLayoutParams();
 
         progressBarLayoutParams.topMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, -8, context.getResources().getDisplayMetrics());
         progressBarLayoutParams.bottomMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, -8, context.getResources().getDisplayMetrics());
@@ -154,10 +154,10 @@ public class DefaultCompletionLayout implements CompletionLayout {
      * Perform motion events
      */
     private void performScrollList(int offset) {
-        var adpView = getCompletionList();
+        ListView adpView = getCompletionList();
 
         long down = SystemClock.uptimeMillis();
-        var ev = MotionEvent.obtain(down, down, MotionEvent.ACTION_DOWN, 0, 0, 0);
+        MotionEvent ev = MotionEvent.obtain(down, down, MotionEvent.ACTION_DOWN, 0, 0, 0);
         adpView.onTouchEvent(ev);
         ev.recycle();
 

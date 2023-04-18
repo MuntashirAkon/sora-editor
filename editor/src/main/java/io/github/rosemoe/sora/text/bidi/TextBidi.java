@@ -44,14 +44,14 @@ public class TextBidi {
      */
     @NonNull
     public static Directions getDirections(@NonNull CharSequence text) {
-        var len = text.length();
+        int len = text.length();
         if (doesNotNeedBidi(text)) {
             return new Directions(new long[]{IntPair.pack(0, 0)}, len);
         }
-        var chars = TemporaryCharBuffer.obtain(len);
+        char[] chars = TemporaryCharBuffer.obtain(len);
         TextUtils.getChars(text, 0, len, chars, 0);
-        var bidi = new Bidi(chars, 0, null, 0, text.length(), Bidi.DIRECTION_LEFT_TO_RIGHT);
-        var runs = new long[bidi.getRunCount()];
+        Bidi bidi = new Bidi(chars, 0, null, 0, text.length(), Bidi.DIRECTION_LEFT_TO_RIGHT);
+        long[] runs = new long[bidi.getRunCount()];
         for (int i = 0; i < runs.length; i++) {
             runs[i] = IntPair.pack(bidi.getRunStart(i), bidi.getRunLevel(i));
         }
@@ -80,7 +80,7 @@ public class TextBidi {
         if (text instanceof BidiRequirementChecker) {
             return !((BidiRequirementChecker) text).mayNeedBidi();
         }
-        final var len = text.length();
+        final int len = text.length();
         for (int i = 0; i < len; i++) {
             if (couldAffectRtl(text.charAt(i))) {
                 return false;

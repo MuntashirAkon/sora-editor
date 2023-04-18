@@ -114,7 +114,7 @@ public class SymbolInputView extends LinearLayout {
     public void addSymbols(@NonNull String[] display, @NonNull final String[] insertText) {
         int count = Math.max(display.length, insertText.length);
         for (int i = 0; i < count; i++) {
-            var btn = new Button(getContext(), null, android.R.attr.buttonStyleSmall);
+            Button btn = new Button(getContext(), null, android.R.attr.buttonStyleSmall);
             btn.setText(display[i]);
             btn.setBackground(new ColorDrawable(Color.TRANSPARENT));
             btn.setTextColor(textColor);

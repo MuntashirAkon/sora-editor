@@ -24,6 +24,8 @@ import org.eclipse.tm4e.core.internal.parser.PListPath;
 import org.eclipse.tm4e.core.internal.parser.PropertySettable;
 import org.eclipse.tm4e.core.registry.IThemeSource;
 
+import java.io.Reader;
+
 /**
  * TextMate Theme reader utilities.
  */
@@ -36,7 +38,7 @@ public final class ThemeReader {
 	private static final PListParser<ThemeRaw> YAML_PARSER = new PListParserYAML<>(OBJECT_FACTORY);
 
 	public static IRawTheme readTheme(final IThemeSource source) throws Exception {
-		try (var reader = source.getReader()) {
+		try (Reader reader = source.getReader()) {
 			switch (source.getContentType()) {
 			case JSON:
 				return JSON_PARSER.parse(reader);

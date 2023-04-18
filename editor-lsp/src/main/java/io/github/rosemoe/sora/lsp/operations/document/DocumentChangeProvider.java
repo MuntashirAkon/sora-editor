@@ -64,7 +64,7 @@ public class DocumentChangeProvider extends RunOnlyProvider<ContentChangeEvent> 
     @Override
     public void run(ContentChangeEvent data) {
 
-        var params = createDidChangeTextDocumentParams(data);
+        DidChangeTextDocumentParams params = createDidChangeTextDocumentParams(data);
 
         editor.getRequestManagerOfOptional().ifPresent(requestManager -> {
             future = CompletableFuture.runAsync(() -> requestManager.didChange(params));
@@ -82,15 +82,15 @@ public class DocumentChangeProvider extends RunOnlyProvider<ContentChangeEvent> 
     }
 
     private List<TextDocumentContentChangeEvent> createIncrementTextDocumentContentChangeEvent(ContentChangeEvent data) {
-        var text = data.getChangedText().toString();
+        String text = data.getChangedText().toString();
         return List.of(LspUtils.createTextDocumentContentChangeEvent(LspUtils.createRange(data.getChangeStart(), data.getChangeEnd()), data.getAction() == ContentChangeEvent.ACTION_DELETE ? text.length() : 0, data.getAction() == ContentChangeEvent.ACTION_DELETE ? "" : text));
     }
 
 
     private DidChangeTextDocumentParams createDidChangeTextDocumentParams(ContentChangeEvent data) {
-        var kind = editor.getSyncOptions();
+        TextDocumentSyncKind kind = editor.getSyncOptions();
 
-        var isFullSync = kind == TextDocumentSyncKind.None || kind == TextDocumentSyncKind.Full;
+        boolean isFullSync = kind == TextDocumentSyncKind.None || kind == TextDocumentSyncKind.Full;
 
         return LspUtils.createDidChangeTextDocumentParams(editor.getCurrentFileUri(), isFullSync ? createFullTextDocumentContentChangeEvent() : createIncrementTextDocumentContentChangeEvent(data));
     }

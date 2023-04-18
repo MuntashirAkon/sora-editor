@@ -95,7 +95,7 @@ public class TMModel implements ITMModel {
 					final int lineIndexToProcess = invalidLines.take();
 
 					// skip if the queued line is not invalid anymore
-					final var modelLine = modelLines.getOrNull(lineIndexToProcess);
+					final AbstractModelLines.@Nullable ModelLine modelLine = modelLines.getOrNull(lineIndexToProcess);
 					if (modelLine == null || !modelLine.isInvalid)
 						continue;
 
@@ -155,7 +155,7 @@ public class TMModel implements ITMModel {
 	private UpdateTokensOfLineResult updateTokensOfLine(final ModelTokensChangedEventBuilder eventBuilder,
 		final int lineIndex, final Duration timeLimit) {
 
-		final var modelLine = modelLines.getOrNull(lineIndex);
+		final AbstractModelLines.@Nullable ModelLine modelLine = modelLines.getOrNull(lineIndex);
 		if (modelLine == null) {
 			return UpdateTokensOfLineResult.DONE; // line does not exist anymore
 		}
@@ -187,7 +187,7 @@ public class TMModel implements ITMModel {
 		/*
 		 * check if the next line now requires a token update too
 		 */
-		final var nextModelLine = modelLines.getOrNull(lineIndex + 1);
+		final AbstractModelLines.@Nullable ModelLine nextModelLine = modelLines.getOrNull(lineIndex + 1);
 		if (nextModelLine == null) {
 			return UpdateTokensOfLineResult.DONE; // next line does not exist
 		}
@@ -211,7 +211,7 @@ public class TMModel implements ITMModel {
 	public void setGrammar(final IGrammar grammar) {
 		if (!Objects.equals(grammar, this.grammar)) {
 			this.grammar = grammar;
-			final var tokenizer = this.tokenizer = new TMTokenization(grammar);
+			final @Nullable TMTokenization tokenizer = this.tokenizer = new TMTokenization(grammar);
 			modelLines.get(0).startState = tokenizer.getInitialState();
 			startTokenizerThread();
 		}
@@ -241,11 +241,11 @@ public class TMModel implements ITMModel {
 
 	private synchronized void startTokenizerThread() {
 		if (tokenizer != null && !listeners.isEmpty()) {
-			var fThread = this.fThread;
+			@Nullable TokenizerThread fThread = this.fThread;
 			if (fThread == null || fThread.isInterrupted()) {
 				fThread = this.fThread = new TokenizerThread(getClass().getName());
 			}
-			if (!fThread.isAlive()) {
+			if (fThread != null && !fThread.isAlive()) {
 				fThread.start();
 			}
 		}
@@ -255,7 +255,7 @@ public class TMModel implements ITMModel {
 	 * Interrupt the thread if running.
 	 */
 	private synchronized void stopTokenizerThread() {
-		final var fThread = this.fThread;
+		final @Nullable TokenizerThread fThread = this.fThread;
 		if (fThread == null) {
 			return;
 		}
@@ -283,7 +283,7 @@ public class TMModel implements ITMModel {
 	@Override
 	@Nullable
 	public List<TMToken> getLineTokens(final int lineIndex) {
-		final var modelLine = modelLines.getOrNull(lineIndex);
+		final AbstractModelLines.@Nullable ModelLine modelLine = modelLines.getOrNull(lineIndex);
 		return modelLine == null ? null : modelLine.tokens;
 	}
 
@@ -295,7 +295,7 @@ public class TMModel implements ITMModel {
 	 * Marks the given line as out-of-date resulting in async re-parsing
 	 */
 	void invalidateLine(final int lineIndex) {
-		final var modelLine = modelLines.getOrNull(lineIndex);
+		final AbstractModelLines.@Nullable ModelLine modelLine = modelLines.getOrNull(lineIndex);
 		if (modelLine != null) {
 			modelLine.isInvalid = true;
 			invalidLines.add(lineIndex);

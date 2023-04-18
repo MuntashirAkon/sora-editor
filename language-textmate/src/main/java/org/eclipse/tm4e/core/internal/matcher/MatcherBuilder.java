@@ -47,7 +47,7 @@ final class MatcherBuilder<T> {
 		this.matchesName = matchesName;
 
 		// defining local token variable for annotation-based null analysis
-		var token = this.token = tokenizer.next();
+		@Nullable String token = this.token = tokenizer.next();
 		while (token != null) {
 			int priority = 0;
 			if (token.length() == 2 && token.charAt(1) == ':') {
@@ -76,13 +76,13 @@ final class MatcherBuilder<T> {
 	private Matcher<T> parseOperand() {
 		if ("-".equals(token)) {
 			token = tokenizer.next();
-			final var expressionToNegate = parseOperand();
+			final @Nullable Matcher<T> expressionToNegate = parseOperand();
 			return matcherInput -> expressionToNegate != null && !expressionToNegate.matches(matcherInput);
 		}
 
 		if ("(".equals(token)) {
 			token = tokenizer.next();
-			final var expressionInParents = parseInnerExpression();
+			final Matcher<T> expressionInParents = parseInnerExpression();
 			if (")".equals(token)) {
 				token = tokenizer.next();
 			}
@@ -90,9 +90,9 @@ final class MatcherBuilder<T> {
 		}
 
 		// defining local token variable for annotation-based null analysis
-		var token = this.token;
+		@Nullable String token = this.token;
 		if (token != null && isIdentifier(token)) {
-			final var identifiers = new ArrayList<String>();
+			final ArrayList<String> identifiers = new ArrayList<String>();
 			do {
 				identifiers.add(token);
 				token = this.token = tokenizer.next();
@@ -103,7 +103,7 @@ final class MatcherBuilder<T> {
 	}
 
 	private Matcher<T> parseConjunction() {
-		final var matchers = new ArrayList<Matcher<T>>();
+		final ArrayList<Matcher<T>> matchers = new ArrayList<Matcher<T>>();
 		Matcher<T> matcher = parseOperand();
 		while (matcher != null) {
 			matchers.add(matcher);
@@ -123,7 +123,7 @@ final class MatcherBuilder<T> {
 	}
 
 	private Matcher<T> parseInnerExpression() {
-		final var matchers = new ArrayList<Matcher<T>>();
+		final ArrayList<Matcher<T>> matchers = new ArrayList<Matcher<T>>();
 		Matcher<T> matcher = parseConjunction();
 		while (true) {
 			matchers.add(matcher);

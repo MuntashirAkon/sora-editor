@@ -64,8 +64,8 @@ public final class ThemeTrieElement {
 
 	private static int _cmpBySpecificity(final ThemeTrieElementRule a, final ThemeTrieElementRule b) {
 		if (a.scopeDepth == b.scopeDepth) {
-			final var aParentScopes = a.parentScopes;
-			final var bParentScopes = b.parentScopes;
+			final @Nullable List<String> aParentScopes = a.parentScopes;
+			final @Nullable List<String> bParentScopes = b.parentScopes;
 			final int aParentScopesLen = aParentScopes == null ? 0 : aParentScopes.size();
 			final int bParentScopesLen = bParentScopes == null ? 0 : bParentScopes.size();
 			if (aParentScopesLen == bParentScopesLen) {

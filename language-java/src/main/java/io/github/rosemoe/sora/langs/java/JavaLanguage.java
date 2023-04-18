@@ -48,6 +48,7 @@ import io.github.rosemoe.sora.lang.styling.Styles;
 import io.github.rosemoe.sora.lang.styling.StylesUtils;
 import io.github.rosemoe.sora.text.CharPosition;
 import io.github.rosemoe.sora.text.Content;
+import io.github.rosemoe.sora.text.ContentLine;
 import io.github.rosemoe.sora.text.ContentReference;
 import io.github.rosemoe.sora.text.TextUtils;
 import io.github.rosemoe.sora.util.MyCharacter;
@@ -99,8 +100,8 @@ public class JavaLanguage implements Language {
     @Override
     public void requireAutoComplete(@NonNull ContentReference content, @NonNull CharPosition position,
                                     @NonNull CompletionPublisher publisher, @NonNull Bundle extraArguments) {
-        var prefix = CompletionHelper.computePrefix(content, position, MyCharacter::isJavaIdentifierPart);
-        final var idt = manager.identifiers;
+        String prefix = CompletionHelper.computePrefix(content, position, MyCharacter::isJavaIdentifierPart);
+        final IdentifierAutoComplete.SyncIdentifiers idt = manager.identifiers;
         if (idt != null) {
             autoComplete.requireAutoComplete(content,position,prefix, publisher, idt);
         }
@@ -117,7 +118,7 @@ public class JavaLanguage implements Language {
 
     @Override
     public int getIndentAdvance(@NonNull ContentReference text, int line, int column) {
-        var content = text.getLine(line).substring(0, column);
+        String content = text.getLine(line).substring(0, column);
         return getIndentAdvance(content);
     }
 
@@ -175,7 +176,7 @@ public class JavaLanguage implements Language {
 
         @Override
         public boolean matchesRequirement(@NonNull Content text, @NonNull CharPosition position, @Nullable Styles style) {
-            var line = text.getLine(position.line);
+            ContentLine line = text.getLine(position.line);
             return !StylesUtils.checkNoCompletion(style, position) && getNonEmptyTextBefore(line, position.column, 1).equals("{") &&
                     getNonEmptyTextAfter(line, position.column, 1).equals("}");
         }
@@ -183,10 +184,10 @@ public class JavaLanguage implements Language {
         @NonNull
         @Override
         public NewlineHandleResult handleNewline(@NonNull Content text, @NonNull CharPosition position, @Nullable Styles style, int tabSize) {
-            var line = text.getLine(position.line);
+            ContentLine line = text.getLine(position.line);
             int index = position.column;
-            var beforeText = line.subSequence(0, index).toString();
-            var afterText = line.subSequence(index, line.length()).toString();
+            String beforeText = line.subSequence(0, index).toString();
+            String afterText = line.subSequence(index, line.length()).toString();
             return handleNewline(beforeText, afterText, tabSize);
         }
 

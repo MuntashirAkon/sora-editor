@@ -62,8 +62,8 @@ public class FileProviderRegistry {
 
     @Nullable
     public InputStream tryGetInputStream(String path) {
-        for (var provider : allFileResolvers) {
-            var stream = provider.resolveStreamByPath(path);
+        for (FileResolver provider : allFileResolvers) {
+            InputStream stream = provider.resolveStreamByPath(path);
             if (stream!=null) {
                 return stream;
             }
@@ -72,7 +72,7 @@ public class FileProviderRegistry {
     }
 
     public void dispose() {
-        for (var provider : allFileResolvers) {
+        for (FileResolver provider : allFileResolvers) {
             provider.dispose();
         }
 

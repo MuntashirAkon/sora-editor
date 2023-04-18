@@ -39,6 +39,7 @@ import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer;
 import io.github.rosemoe.sora.lsp.editor.LspEditor;
 import io.github.rosemoe.sora.lsp.operations.RunOnlyProvider;
 import io.github.rosemoe.sora.lsp.utils.LspUtils;
+import io.github.rosemoe.sora.widget.CodeEditor;
 
 public class PublishDiagnosticsProvider extends RunOnlyProvider<List<Diagnostic>> {
 
@@ -58,13 +59,13 @@ public class PublishDiagnosticsProvider extends RunOnlyProvider<List<Diagnostic>
     @Override
     public void run(List<Diagnostic> data) {
 
-        var currentEditor = editor.getEditor();
+        CodeEditor currentEditor = editor.getEditor();
 
         if (currentEditor == null) {
             return;
         }
 
-        var diagnosticsContainer = currentEditor.getDiagnostics() != null ? currentEditor.getDiagnostics() : new DiagnosticsContainer();
+        DiagnosticsContainer diagnosticsContainer = currentEditor.getDiagnostics() != null ? currentEditor.getDiagnostics() : new DiagnosticsContainer();
 
         diagnosticsContainer.reset();
 

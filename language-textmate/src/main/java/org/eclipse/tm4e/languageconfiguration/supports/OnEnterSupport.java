@@ -73,18 +73,18 @@ public class OnEnterSupport {
             if (rule == null) {
                 continue;
             }
-            var regResult = 1;
+            int regResult = 1;
 
-            final var beforeText = rule.beforeText;
+            final Pattern beforeText = rule.beforeText;
 
             regResult &= beforeText.matcher(beforeEnterText).matches() ? 1 : 0;
 
-            final var afterText = rule.afterText;
+            final @Nullable Pattern afterText = rule.afterText;
             if (afterText != null) {
                 regResult &= afterText.matcher(afterEnterText).matches() ? 1 : 0;
             }
 
-            final var previousText = rule.previousLineText;
+            final @Nullable Pattern previousText = rule.previousLineText;
             if (previousText != null) {
                 regResult &= previousText.matcher(previousLineText).matches() ? 1 : 0;
             }
@@ -140,8 +140,8 @@ public class OnEnterSupport {
 
         @Nullable
         private static Pattern createOpenBracketRegExp(final String bracket) {
-            final var str = new StringBuilder(RegExpUtils.escapeRegExpCharacters(bracket));
-            final var c = String.valueOf(str.charAt(0));
+            final StringBuilder str = new StringBuilder(RegExpUtils.escapeRegExpCharacters(bracket));
+            final String c = String.valueOf(str.charAt(0));
             if (!B_REGEXP.matcher(c).find()) {
                 str.insert(0, "\\b"); //$NON-NLS-1$
             }
@@ -151,8 +151,8 @@ public class OnEnterSupport {
 
         @Nullable
         private static Pattern createCloseBracketRegExp(final String bracket) {
-            final var str = new StringBuilder(RegExpUtils.escapeRegExpCharacters(bracket));
-            final var c = String.valueOf(str.charAt(str.length() - 1));
+            final StringBuilder str = new StringBuilder(RegExpUtils.escapeRegExpCharacters(bracket));
+            final String c = String.valueOf(str.charAt(str.length() - 1));
             if (!B_REGEXP.matcher(c).find()) {
                 str.append("\\b"); //$NON-NLS-1$
             }

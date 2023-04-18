@@ -207,7 +207,7 @@ public class CompletionPublisher {
                 callback.run();
                 return;
             }
-            var locked = false;
+            boolean locked = false;
             if (forced) {
                 lock.lock();
                 locked = true;
@@ -221,20 +221,20 @@ public class CompletionPublisher {
                         callback.run();
                         return;
                     }
-                    final var comparator = this.comparator;
+                    final Comparator<CompletionItem> comparator = this.comparator;
                     if (comparator != null) {
                         while (!candidates.isEmpty()) {
-                            var candidate = candidates.remove(0);
+                            CompletionItem candidate = candidates.remove(0);
                             // Insert the value by binary search
                             int left = 0, right = items.size();
-                            var size = right;
+                            int size = right;
                             while (left <= right) {
-                                var mid = (left + right) / 2;
+                                int mid = (left + right) / 2;
                                 if (mid < 0 || mid >= size) {
                                     left = mid;
                                     break;
                                 }
-                                var cmp = comparator.compare(items.get(mid), candidate);
+                                int cmp = comparator.compare(items.get(mid), candidate);
                                 if (cmp < 0) {
                                     left = mid + 1;
                                 } else if (cmp > 0) {

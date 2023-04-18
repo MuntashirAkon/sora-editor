@@ -137,7 +137,7 @@ public abstract class AbstractLayout implements Layout {
         @Override
         public void run() {
             if (shouldRun()) {
-                var result = compute();
+                T result = compute();
                 monitor.reportCompleted(result);
             } else {
                 monitor.reportCancelled();

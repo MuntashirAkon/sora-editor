@@ -51,8 +51,8 @@ public class ThemeTrieElementRule {
 	}
 
 	public static List<ThemeTrieElementRule> cloneArr(final List<ThemeTrieElementRule> arr) {
-		final var r = new ArrayList<ThemeTrieElementRule>(arr.size());
-		for (final var e : arr) {
+		final ArrayList<ThemeTrieElementRule> r = new ArrayList<ThemeTrieElementRule>(arr.size());
+		for (final ThemeTrieElementRule e : arr) {
 			r.add(e.clone());
 		}
 		return r;

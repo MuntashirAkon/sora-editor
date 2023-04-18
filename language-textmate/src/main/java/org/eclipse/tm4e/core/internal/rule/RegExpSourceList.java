@@ -72,7 +72,7 @@ final class RegExpSourceList {
 	}
 
 	CompiledRule compile() {
-		var cached = this.cached;
+		@Nullable CompiledRule cached = this.cached;
 		if (cached == null) {
 			final List<String> regexps = items.stream().map(RegExpSource::getSource).collect(Collectors.toList());
 			cached = this.cached = new CompiledRule(regexps, items.stream().map(e -> e.ruleId).toArray(RuleId[]::new));
@@ -85,10 +85,10 @@ final class RegExpSourceList {
 			return compile();
 		}
 
-		final var indexA = allowA ? 1 : 0;
-		final var indexG = allowG ? 1 : 0;
+		final int indexA = allowA ? 1 : 0;
+		final int indexG = allowG ? 1 : 0;
 
-		var rule = anchorCache[indexA][indexG];
+		CompiledRule rule = anchorCache[indexA][indexG];
 		if (rule == null) {
 			rule = anchorCache[indexA][indexG] = resolveAnchors(allowA, allowG);
 		}

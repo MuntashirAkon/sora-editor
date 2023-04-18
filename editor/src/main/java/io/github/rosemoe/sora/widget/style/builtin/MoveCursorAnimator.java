@@ -59,7 +59,7 @@ public class MoveCursorAnimator implements CursorAnimator, ValueAnimator.Animato
 
     @Override
     public void markStartPos() {
-        var line = editor.getCursor().getLeftLine();
+        int line = editor.getCursor().getLeftLine();
         float[] pos = editor.getLayout().getCharLayoutOffset(line, editor.getCursor().getLeftColumn());
         startX = editor.measureTextRegionOffset() + pos[1];
         startY = pos[0] - minusHeight();
@@ -99,7 +99,7 @@ public class MoveCursorAnimator implements CursorAnimator, ValueAnimator.Animato
         if (System.currentTimeMillis() - lastAnimateTime < 100) {
             return;
         }
-        var line = editor.getCursor().getLeftLine();
+        int line = editor.getCursor().getLeftLine();
         animatorX.removeAllUpdateListeners();
         float[] pos = editor.getLayout().getCharLayoutOffset(editor.getCursor().getLeftLine(), editor.getCursor().getLeftColumn());
 

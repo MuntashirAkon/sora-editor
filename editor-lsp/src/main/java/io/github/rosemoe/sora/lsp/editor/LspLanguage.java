@@ -32,6 +32,7 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -99,13 +100,13 @@ public class LspLanguage implements Language {
             return;
         }*/
 
-        var prefix = computePrefix(content, position);
+        String prefix = computePrefix(content, position);
         // Log.d("prefix", prefix);
 
-        var prefixLength = prefix.length();
+        int prefixLength = prefix.length();
 
         currentEditor.getProviderManager().safeUseProvider(DocumentChangeProvider.class).ifPresent(documentChangeFeature -> {
-            var documentChangeFuture = documentChangeFeature.getFuture();
+            CompletableFuture<Void> documentChangeFuture = documentChangeFeature.getFuture();
             if (!documentChangeFuture.isDone() || !documentChangeFuture.isCompletedExceptionally() || !documentChangeFuture.isCancelled()) {
                 try {
                     documentChangeFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -115,10 +116,10 @@ public class LspLanguage implements Language {
             }
         });
 
-        var completionList = new ArrayList<CompletionItem>();
+        ArrayList<CompletionItem> completionList = new ArrayList<CompletionItem>();
 
         try {
-            var completionFeature = currentEditor.getProviderManager().useProvider(CompletionProvider.class);
+            CompletionProvider completionFeature = currentEditor.getProviderManager().useProvider(CompletionProvider.class);
 
             if (completionFeature == null) {
                 return;
@@ -152,7 +153,7 @@ public class LspLanguage implements Language {
         // add whitespace as delimiter, otherwise forced completion does not work
         delimiters.addAll(Arrays.asList(" \t\n\r".split("")));
 
-        var offset = position.index;
+        int offset = position.index;
 
         StringBuilder s = new StringBuilder();
 

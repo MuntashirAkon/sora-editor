@@ -127,7 +127,7 @@ public final class CharPosition {
      */
     @NonNull
     public CharPosition fromThis() {
-        var pos = new CharPosition();
+        CharPosition pos = new CharPosition();
         pos.set(this);
         return pos;
     }

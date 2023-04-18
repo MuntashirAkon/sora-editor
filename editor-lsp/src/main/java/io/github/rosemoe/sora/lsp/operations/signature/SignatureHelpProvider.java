@@ -29,6 +29,7 @@ import androidx.annotation.WorkerThread;
 
 import com.google.gson.Gson;
 
+import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 
 import java.util.concurrent.CompletableFuture;
@@ -70,12 +71,12 @@ public class SignatureHelpProvider extends RunOnlyProvider<CharPosition> {
             return;
         }
 
-        var signatureHelpParams = new SignatureHelpParams(
+        SignatureHelpParams signatureHelpParams = new SignatureHelpParams(
                 LspUtils.createTextDocumentIdentifier(editor.getCurrentFileUri()),
                 LspUtils.createPosition(position)
         );
 
-        var future = manager.signatureHelp(signatureHelpParams);
+        CompletableFuture<SignatureHelp> future = manager.signatureHelp(signatureHelpParams);
 
 
         future = future.thenApply(signatureHelp -> {
@@ -85,7 +86,7 @@ public class SignatureHelpProvider extends RunOnlyProvider<CharPosition> {
 
 
         try {
-            var signatureHelp = future.get(Timeout.getTimeout(Timeouts.SIGNATURE), TimeUnit.MILLISECONDS);
+            SignatureHelp signatureHelp = future.get(Timeout.getTimeout(Timeouts.SIGNATURE), TimeUnit.MILLISECONDS);
             editor.showSignatureHelp(signatureHelp);
         } catch (Exception exception) {
             // throw?

@@ -29,6 +29,7 @@ import org.eclipse.tm4e.languageconfiguration.model.CharacterPair;
 import org.eclipse.tm4e.languageconfiguration.model.CommentRule;
 
 import io.github.rosemoe.sora.text.Content;
+import io.github.rosemoe.sora.text.Indexer;
 
 public final class CommentSupport {
 
@@ -44,7 +45,7 @@ public final class CommentSupport {
 			if (isInBlockComment(text.subSequence(0, offset).toString())) {
 				return true;
 			}
-			var indexer = text.getIndexer();
+			Indexer indexer = text.getIndexer();
 			final int line = indexer.getCharLine(offset);
 			final int lineOffset = indexer.getCharIndex(line,0);
 			return isInLineComment(text.subSequence(lineOffset, offset - lineOffset).toString());
@@ -55,29 +56,29 @@ public final class CommentSupport {
 
 	@Nullable
 	public String getLineComment() {
-		final var comments = this.comments;
+		final @Nullable CommentRule comments = this.comments;
 		return comments == null ? null : comments.lineComment;
 	}
 
 	@Nullable
 	public CharacterPair getBlockComment() {
-		final var comments = this.comments;
+		final @Nullable CommentRule comments = this.comments;
 		return comments == null ? null : comments.blockComment;
 	}
 
 	private boolean isInLineComment(final String indexLinePrefix) {
-		final var comments = this.comments;
-		if (comments == null)
+		final @Nullable CommentRule comments = this.comments;
+		if (comments == null || comments.lineComment == null)
 			return false;
-		return indexLinePrefix.indexOf(comments.lineComment) != -1;
+		return indexLinePrefix.contains(comments.lineComment);
 	}
 
 	private boolean isInBlockComment(final String indexPrefix) {
-		final var comments = this.comments;
+		final @Nullable CommentRule comments = this.comments;
 		if (comments == null)
 			return false;
 
-		final var blockComment = comments.blockComment;
+		final @Nullable CharacterPair blockComment = comments.blockComment;
 		if (blockComment == null)
 			return false;
 

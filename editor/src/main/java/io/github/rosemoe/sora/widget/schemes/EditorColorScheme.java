@@ -213,7 +213,7 @@ public class EditorColorScheme {
     @UnsupportedUserUsage
     public void attachEditor(@NonNull CodeEditor editor) {
         Objects.requireNonNull(editor);
-        for (var ref : editors) {
+        for (WeakReference<CodeEditor> ref : editors) {
             if (ref.get() == editor) {
                 return;
             }
@@ -227,7 +227,7 @@ public class EditorColorScheme {
      */
     @UnsupportedUserUsage
     public void detachEditor(@NonNull CodeEditor editor) {
-        var itr = editors.iterator();
+        java.util.Iterator<WeakReference<CodeEditor>> itr = editors.iterator();
         while (itr.hasNext()) {
             if (itr.next().get() == editor) {
                 itr.remove();
@@ -414,9 +414,9 @@ public class EditorColorScheme {
         colors.put(type, color);
 
         //Notify the editor
-        var itr = editors.iterator();
+        java.util.Iterator<WeakReference<CodeEditor>> itr = editors.iterator();
         while (itr.hasNext()) {
-            var editor = itr.next().get();
+            CodeEditor editor = itr.next().get();
             if (editor == null) {
                 itr.remove();
             } else {
@@ -473,9 +473,9 @@ public class EditorColorScheme {
             colorScheme = new EditorColorScheme();
         }
         if (updateEditors) {
-            var editors = globalDefault.editors.toArray(new WeakReference[0]);
-            for (var ref : editors) {
-                var editor = (CodeEditor) ref.get();
+            WeakReference[] editors = globalDefault.editors.toArray(new WeakReference[0]);
+            for (WeakReference ref : editors) {
+                CodeEditor editor = (CodeEditor) ref.get();
                 if (editor != null) {
                     editor.setColorScheme(colorScheme);
                 }

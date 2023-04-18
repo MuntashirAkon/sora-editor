@@ -176,7 +176,7 @@ public class Content implements CharSequence {
         checkIndex(index);
         lock(false);
         try {
-            var p = getIndexer().getCharPosition(index);
+            CharPosition p = getIndexer().getCharPosition(index);
             return lines.get(p.line).charAt(p.column);
         } finally {
             unlock(false);
@@ -213,8 +213,8 @@ public class Content implements CharSequence {
         }
         lock(false);
         try {
-            var s = getIndexer().getCharPosition(start);
-            var e = getIndexer().getCharPosition(end);
+            CharPosition s = getIndexer().getCharPosition(start);
+            CharPosition e = getIndexer().getCharPosition(end);
             return subContentInternal(s.getLine(), s.getColumn(), e.getLine(), e.getColumn());
         } finally {
             unlock(false);
@@ -227,8 +227,8 @@ public class Content implements CharSequence {
         }
         lock(false);
         try {
-            var s = getIndexer().getCharPosition(start);
-            var e = getIndexer().getCharPosition(end);
+            CharPosition s = getIndexer().getCharPosition(start);
+            CharPosition e = getIndexer().getCharPosition(end);
             return subStringBuilder(s.getLine(), s.getColumn(), e.getLine(), e.getColumn(), end - start + 1).toString();
         } finally {
             unlock(false);
@@ -366,18 +366,18 @@ public class Content implements CharSequence {
         // Notify listeners and cursor manager
         if (cursor != null)
             cursor.beforeInsert(line, column);
-        for (var lis : contentListeners) {
+        for (ContentListener lis : contentListeners) {
             lis.beforeModification(this);
         }
 
         int workLine = line;
         int workIndex = column;
-        var currLine = lines.get(workLine);
-        var helper = InsertTextHelper.forInsertion(text);
+        ContentLine currLine = lines.get(workLine);
+        InsertTextHelper helper = InsertTextHelper.forInsertion(text);
         int type, peekType = InsertTextHelper.TYPE_EOF;
         boolean fromPeek = false;
-        var newLines = new LinkedList<ContentLine>();
-        var startSeparator = currLine.getLineSeparator();
+        LinkedList<ContentLine> newLines = new LinkedList<ContentLine>();
+        LineSeparator startSeparator = currLine.getLineSeparator();
         while (true) {
             type = fromPeek ? peekType : helper.forward();
             fromPeek = false;
@@ -388,14 +388,14 @@ public class Content implements CharSequence {
                 currLine.insert(workIndex, text, helper.getIndex(), helper.getIndexNext());
                 workIndex += helper.getIndexNext() - helper.getIndex();
             } else {
-                var separator = LineSeparator.fromSeparatorString(text, helper.getIndex(), helper.getIndexNext());
+                LineSeparator separator = LineSeparator.fromSeparatorString(text, helper.getIndex(), helper.getIndexNext());
                 currLine.setLineSeparator(separator);
 
                 // Peek!
                 peekType = helper.forward();
                 fromPeek = true;
 
-                var newLine = new ContentLine(currLine.length() - workIndex + helper.getIndexNext() - helper.getIndex() + 10);
+                ContentLine newLine = new ContentLine(currLine.length() - workIndex + helper.getIndexNext() - helper.getIndex() + 10);
                 newLine.insert(0, currLine, workIndex, currLine.length());
                 currLine.delete(workIndex, currLine.length());
                 workIndex = 0;
@@ -457,21 +457,21 @@ public class Content implements CharSequence {
         if (startLine == endLine && columnOnStartLine == columnOnEndLine) {
             return;
         }
-        var endLineObj = lines.get(endLine);
+        ContentLine endLineObj = lines.get(endLine);
         if (columnOnEndLine > endLineObj.length() && endLine + 1 < getLineCount()) {
             // Expected to delete the whole newline
             deleteInternal(startLine, columnOnStartLine, endLine + 1, 0);
             return;
         }
-        var startLineObj = lines.get(startLine);
+        ContentLine startLineObj = lines.get(startLine);
         if (columnOnStartLine > startLineObj.length()) {
             // Expected to delete the whole newline
             deleteInternal(startLine, startLineObj.length(), endLine, columnOnEndLine);
             return;
         }
-        var changedContent = new StringBuilder();
+        StringBuilder changedContent = new StringBuilder();
         if (startLine == endLine) {
-            var curr = lines.get(startLine);
+            ContentLine curr = lines.get(startLine);
             int len = curr.length();
             if (columnOnStartLine < 0 || columnOnEndLine > len || columnOnStartLine > columnOnEndLine) {
                 throw new StringIndexOutOfBoundsException("invalid bounds");
@@ -481,7 +481,7 @@ public class Content implements CharSequence {
             if (cursor != null) {
                 cursor.beforeDelete(startLine, columnOnStartLine, endLine, columnOnEndLine);
             }
-            for (var lis : contentListeners) {
+            for (ContentListener lis : contentListeners) {
                 lis.beforeModification(this);
             }
 
@@ -492,16 +492,16 @@ public class Content implements CharSequence {
             // Notify listeners and cursor manager
             if (cursor != null)
                 cursor.beforeDelete(startLine, columnOnStartLine, endLine, columnOnEndLine);
-            for (var lis : contentListeners) {
+            for (ContentListener lis : contentListeners) {
                 lis.beforeModification(this);
             }
 
             for (int i = startLine + 1; i <= endLine - 1; i++) {
-                var line = lines.get(i);
+                ContentLine line = lines.get(i);
                 if (lineListener != null) {
                     lineListener.onRemove(this, line);
                 }
-                var separator = lines.get(i).getLineSeparator();
+                LineSeparator separator = lines.get(i).getLineSeparator();
                 textLength -= line.length() + separator.getLength();
                 changedContent.append(line).append(separator.getContent());
             }
@@ -513,8 +513,8 @@ public class Content implements CharSequence {
             }
 
             int currEnd = startLine + 1;
-            var start = lines.get(startLine);
-            var end = lines.get(currEnd);
+            ContentLine start = lines.get(startLine);
+            ContentLine end = lines.get(currEnd);
             textLength -= start.length() - columnOnStartLine;
             changedContent.insert(0, start, columnOnStartLine, start.length())
                     .insert(start.length() - columnOnStartLine, start.getLineSeparator().getContent());
@@ -561,8 +561,8 @@ public class Content implements CharSequence {
      * Replace text in the given region with the text
      */
     public void replace(int startIndex, int endIndex, @NonNull CharSequence text) {
-        var start = getIndexer().getCharPosition(startIndex);
-        var end = getIndexer().getCharPosition(endIndex);
+        CharPosition start = getIndexer().getCharPosition(startIndex);
+        CharPosition end = getIndexer().getCharPosition(endIndex);
         replace(start.line, start.column, end.line, end.column, text);
     }
 
@@ -758,10 +758,10 @@ public class Content implements CharSequence {
     }
 
     private Content subContentInternal(int startLine, int startColumn, int endLine, int endColumn) {
-        var c = new Content();
+        Content c = new Content();
         c.setUndoEnabled(false);
         if (startLine == endLine) {
-            var line = lines.get(startLine);
+            ContentLine line = lines.get(startLine);
             if (endColumn == line.length() + 1 && line.getLineSeparator() == LineSeparator.CRLF) {
                 if (startColumn < endColumn) {
                     c.insert(0, 0, line.subSequence(startColumn, line.length()));
@@ -773,7 +773,7 @@ public class Content implements CharSequence {
                 c.insert(0, 0, line.subSequence(startColumn, endColumn));
             }
         } else if (startLine < endLine) {
-            var firstLine = lines.get(startLine);
+            ContentLine firstLine = lines.get(startLine);
             if (firstLine.getLineSeparator() == LineSeparator.CRLF) {
                 if (startColumn <= firstLine.length()) {
                     c.insert(0, 0, firstLine.subSequence(startColumn, firstLine.length()));
@@ -791,13 +791,13 @@ public class Content implements CharSequence {
                 c.textLength += firstLine.getLineSeparator().getLength();
             }
             for (int i = startLine + 1; i < endLine; i++) {
-                var line = lines.get(i);
+                ContentLine line = lines.get(i);
                 c.lines.add(new ContentLine(line));
                 c.textLength += line.length() + line.getLineSeparator().getLength();
             }
-            var end = lines.get(endLine);
+            ContentLine end = lines.get(endLine);
             if (endColumn == end.length() + 1 && end.getLineSeparator() == LineSeparator.CRLF) {
-                var newLine = new ContentLine().insert(0, end, 0, endColumn - 1);
+                ContentLine newLine = new ContentLine().insert(0, end, 0, endColumn - 1);
                 c.lines.add(newLine);
                 newLine.setLineSeparator(LineSeparator.CR);
                 c.textLength += endColumn + 1;
@@ -813,9 +813,9 @@ public class Content implements CharSequence {
     }
 
     private StringBuilder subStringBuilder(int startLine, int startColumn, int endLine, int endColumn, int length) {
-        var sb = new StringBuilder(length);
+        StringBuilder sb = new StringBuilder(length);
         if (startLine == endLine) {
-            var line = lines.get(startLine);
+            ContentLine line = lines.get(startLine);
             if (endColumn == line.length() + 1 && line.getLineSeparator() == LineSeparator.CRLF) {
                 if (startColumn < endColumn) {
                     sb.append(lines.get(startLine), startColumn, line.length())
@@ -825,7 +825,7 @@ public class Content implements CharSequence {
                 sb.append(lines.get(startLine), startColumn, endColumn);
             }
         } else if (startLine < endLine) {
-            var firstLine = lines.get(startLine);
+            ContentLine firstLine = lines.get(startLine);
             if (firstLine.getLineSeparator() == LineSeparator.CRLF) {
                 if (startColumn <= firstLine.length()) {
                     sb.append(firstLine, startColumn, firstLine.length());
@@ -840,11 +840,11 @@ public class Content implements CharSequence {
                 sb.append(firstLine.getLineSeparator().getContent());
             }
             for (int i = startLine + 1; i < endLine; i++) {
-                var line = lines.get(i);
+                ContentLine line = lines.get(i);
                 sb.append(line)
                         .append(line.getLineSeparator().getContent());
             }
-            var end = lines.get(endLine);
+            ContentLine end = lines.get(endLine);
             if (endColumn == end.length() + 1 && end.getLineSeparator() == LineSeparator.CRLF) {
                 sb.append(end, 0, endColumn)
                         .append(LineSeparator.CR.getContent());
@@ -876,7 +876,7 @@ public class Content implements CharSequence {
     }
 
     public boolean isRtlAt(int line, int column) {
-        var dirs = getLineDirections(line);
+        Directions dirs = getLineDirections(line);
         for (int i = 0; i < dirs.getRunCount(); i++) {
             if (column >= dirs.getRunStart(i) && column < dirs.getRunEnd(i)) {
                 return dirs.isRunRtl(i);
@@ -922,7 +922,7 @@ public class Content implements CharSequence {
      * @return StringBuilder form of Content
      */
     public StringBuilder toStringBuilder() {
-        var sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         appendToStringBuilder(sb);
         return sb;
     }
@@ -948,7 +948,7 @@ public class Content implements CharSequence {
         sb.ensureCapacity(sb.length() + length());
         final int lines = getLineCount();
         for (int i = 0; i < lines; i++) {
-            var line = this.lines.get(i);
+            ContentLine line = this.lines.get(i);
             line.appendTo(sb);
             sb.append(line.getLineSeparator().getContent());
         }
@@ -1053,7 +1053,7 @@ public class Content implements CharSequence {
      */
     protected void checkLineAndColumn(int line, int column) {
         checkLine(line);
-        var text = lines.get(line);
+        ContentLine text = lines.get(line);
         int len = text.length() + text.getLineSeparator().getLength();
         if (column > len || column < 0) {
             throw new StringIndexOutOfBoundsException(
@@ -1076,10 +1076,10 @@ public class Content implements CharSequence {
     public Content copyText(boolean newContentThreadSafe) {
         lock(false);
         try {
-            var n = new Content(null, newContentThreadSafe);
+            Content n = new Content(null, newContentThreadSafe);
             n.lines.remove(0);
             for (int i = 0; i < getLineCount(); i++) {
-                var line = lines.get(i);
+                ContentLine line = lines.get(i);
                 n.lines.add(new ContentLine(line));
             }
             n.textLength = textLength;
@@ -1126,7 +1126,7 @@ public class Content implements CharSequence {
     public void runReadActionsOnLines(int startLine, int endLine, @NonNull ContentLineConsumer2 consumer) {
         lock(false);
         try {
-            var flag = new ContentLineConsumer2.AbortFlag();
+            ContentLineConsumer2.AbortFlag flag = new ContentLineConsumer2.AbortFlag();
             for (int i = startLine; i <= endLine && !flag.set; i++) {
                 consumer.accept(i, lines.get(i), flag);
             }

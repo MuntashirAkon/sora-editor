@@ -39,14 +39,14 @@ import java.util.List;
  */
 public final class UndoManager implements ContentListener, Parcelable {
 
-    public final static Creator<UndoManager> CREATOR = new Creator<>() {
+    public final static Creator<UndoManager> CREATOR = new Creator<UndoManager>() {
         @Override
         public UndoManager createFromParcel(Parcel parcel) {
-            var o = new UndoManager();
+            UndoManager o = new UndoManager();
             o.maxStackSize = parcel.readInt();
             o.stackPointer = parcel.readInt();
             o.undoEnabled = parcel.readInt() > 0;
-            var count = parcel.readInt();
+            int count = parcel.readInt();
             while (count > 0) {
                 o.actionStack.add(parcel.readParcelable(UndoManager.class.getClassLoader()));
                 count--;
@@ -156,7 +156,7 @@ public final class UndoManager implements ContentListener, Parcelable {
     void onExitBatchEdit() {
         forceNewMultiAction = true;
         if (!actionStack.isEmpty() && actionStack.get(actionStack.size() - 1) instanceof MultiAction) {
-            var action = ((MultiAction) actionStack.get(actionStack.size() - 1));
+            MultiAction action = ((MultiAction) actionStack.get(actionStack.size() - 1));
             if (action._actions.size() == 1) {
                 actionStack.set(actionStack.size() - 1, action._actions.get(0));
             }
@@ -398,10 +398,10 @@ public final class UndoManager implements ContentListener, Parcelable {
      */
     public static final class InsertAction implements ContentAction {
 
-        public static final Creator<InsertAction> CREATOR = new Creator<>() {
+        public static final Creator<InsertAction> CREATOR = new Creator<InsertAction>() {
             @Override
             public InsertAction createFromParcel(Parcel parcel) {
-                var o = new InsertAction();
+                InsertAction o = new InsertAction();
                 o.startLine = parcel.readInt();
                 o.startColumn = parcel.readInt();
                 o.endLine = parcel.readInt();
@@ -493,11 +493,11 @@ public final class UndoManager implements ContentListener, Parcelable {
      */
     public static final class MultiAction implements ContentAction {
 
-        public final static Creator<MultiAction> CREATOR = new Creator<>() {
+        public final static Creator<MultiAction> CREATOR = new Creator<MultiAction>() {
             @Override
             public MultiAction createFromParcel(Parcel parcel) {
-                var o = new MultiAction();
-                var count = parcel.readInt();
+                MultiAction o = new MultiAction();
+                int count = parcel.readInt();
                 while (count > 0) {
                     o._actions.add(parcel.readParcelable(MultiAction.class.getClassLoader()));
                     count--;
@@ -570,10 +570,10 @@ public final class UndoManager implements ContentListener, Parcelable {
      */
     public static final class DeleteAction implements ContentAction {
 
-        public final static Creator<DeleteAction> CREATOR = new Creator<>() {
+        public final static Creator<DeleteAction> CREATOR = new Creator<DeleteAction>() {
             @Override
             public DeleteAction createFromParcel(Parcel parcel) {
-                var o = new DeleteAction();
+                DeleteAction o = new DeleteAction();
                 o.startLine = parcel.readInt();
                 o.startColumn = parcel.readInt();
                 o.endLine = parcel.readInt();
@@ -665,10 +665,10 @@ public final class UndoManager implements ContentListener, Parcelable {
      */
     public static final class ReplaceAction implements ContentAction {
 
-        public final static Creator<ReplaceAction> CREATOR = new Creator<>() {
+        public final static Creator<ReplaceAction> CREATOR = new Creator<ReplaceAction>() {
             @Override
             public ReplaceAction createFromParcel(Parcel parcel) {
-                var o = new ReplaceAction();
+                ReplaceAction o = new ReplaceAction();
                 o._insert = parcel.readParcelable(ReplaceAction.class.getClassLoader());
                 o._delete = parcel.readParcelable(ReplaceAction.class.getClassLoader());
                 return o;

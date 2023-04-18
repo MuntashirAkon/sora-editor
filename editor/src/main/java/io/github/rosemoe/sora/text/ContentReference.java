@@ -159,9 +159,9 @@ public class ContentReference extends TextReference {
             }
             int read = 0;
             while (read < length && line < getLineCount()) {
-                var targetLine = content.getLine(line);
-                var separatorLength = targetLine.getLineSeparator().getLength();
-                var columnCount = targetLine.length();
+                ContentLine targetLine = content.getLine(line);
+                int separatorLength = targetLine.getLineSeparator().getLength();
+                int columnCount = targetLine.length();
                 int toRead = Math.min(columnCount - column, length - read);
                 toRead = Math.max(0, toRead);
                 if (toRead > 0) {

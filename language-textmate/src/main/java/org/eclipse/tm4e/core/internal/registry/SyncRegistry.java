@@ -60,7 +60,7 @@ public final class SyncRegistry implements IGrammarRepository, IThemeProvider {
     public void addGrammar(final IRawGrammar grammar, @Nullable final Collection<String> injectionScopeNames) {
 
         //dingyi change: check grammar is loaded
-        final var rawGrammar = lookup(grammar.getScopeName());
+        final @Nullable IRawGrammar rawGrammar = lookup(grammar.getScopeName());
         if (rawGrammar != null) {
             return;
         }
@@ -112,7 +112,7 @@ public final class SyncRegistry implements IGrammarRepository, IThemeProvider {
             @Nullable final Map<String, Integer> tokenTypes,
             @Nullable final BalancedBracketSelectors balancedBracketSelectors) {
         if (!this._grammars.containsKey(scopeName)) {
-            final var rawGrammar = lookup(scopeName);
+            final @Nullable IRawGrammar rawGrammar = lookup(scopeName);
             if (rawGrammar == null) {
                 return null;
             }

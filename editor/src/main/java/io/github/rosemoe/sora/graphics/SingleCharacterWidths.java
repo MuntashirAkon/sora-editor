@@ -70,7 +70,7 @@ public class SingleCharacterWidths {
      * Measure a single character
      */
     public float measureChar(char ch, Paint p) {
-        var rate = 1;
+        int rate = 1;
         if (ch == '\t') {
             ch = ' ';
             rate = tabWidth;
@@ -91,9 +91,9 @@ public class SingleCharacterWidths {
         if (cp <= 65535) {
             return measureChar((char) cp, p);
         }
-        var width = codePointWidths.get(cp);
+        Float width = codePointWidths.get(cp);
         if (width == null) {
-            var count = Character.toChars(cp, buffer, 0);
+            int count = Character.toChars(cp, buffer, 0);
             width = p.measureText(buffer, 0, count);
             codePointWidths.put(cp, width);
         }
@@ -124,7 +124,7 @@ public class SingleCharacterWidths {
                 width += p.measureText(buffer, 0, len);
                 i += len - 1;
             } else if(isHandleFunctionCharacters() && FunctionCharacters.isEditorFunctionChar(ch)) {
-                var name = FunctionCharacters.getNameForFunctionCharacter(ch);
+                String name = FunctionCharacters.getNameForFunctionCharacter(ch);
                 for (int j = 0;j < name.length();j++) {
                     width += measureChar(name.charAt(j), p);
                 }
@@ -163,7 +163,7 @@ public class SingleCharacterWidths {
                 width += p.measureText(buffer, 0, len);
                 i += len - 1;
             } else if(isHandleFunctionCharacters() && FunctionCharacters.isEditorFunctionChar(ch)) {
-                var name = FunctionCharacters.getNameForFunctionCharacter(ch);
+                String name = FunctionCharacters.getNameForFunctionCharacter(ch);
                 for (int j = 0;j < name.length();j++) {
                     width += measureChar(name.charAt(j), p);
                 }

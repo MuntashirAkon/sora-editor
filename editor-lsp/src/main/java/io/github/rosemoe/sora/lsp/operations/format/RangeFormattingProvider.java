@@ -29,6 +29,7 @@ import androidx.annotation.WorkerThread;
 
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.FormattingOptions;
+import org.eclipse.lsp4j.TextEdit;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,16 +75,16 @@ public class RangeFormattingProvider extends RunOnlyProvider<Pair<Content, TextR
             return;
         }
 
-        var formattingParams = new DocumentRangeFormattingParams();
+        DocumentRangeFormattingParams formattingParams = new DocumentRangeFormattingParams();
         formattingParams.setOptions(editor.getProviderManager().getOption(FormattingOptions.class));
 
         formattingParams.setTextDocument(LspUtils.createTextDocumentIdentifier(editor.getCurrentFileUri()));
-        var textRange = data.second;
+        TextRange textRange = data.second;
         formattingParams.setRange(LspUtils.createRange(textRange));
 
-        var content = data.first;
+        Content content = data.first;
 
-        var formattingFuture = manager.rangeFormatting(formattingParams);
+        CompletableFuture<List<? extends TextEdit>> formattingFuture = manager.rangeFormatting(formattingParams);
 
         if (formattingFuture == null) {
             future = CompletableFuture.completedFuture(null);

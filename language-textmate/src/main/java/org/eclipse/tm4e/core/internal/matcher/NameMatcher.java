@@ -28,7 +28,7 @@ import org.eclipse.jdt.annotation.Nullable;
  */
 public interface NameMatcher<T> {
 
-	NameMatcher<List<String>> DEFAULT = new NameMatcher<>() {
+	NameMatcher<List<String>> DEFAULT = new NameMatcher<List<String>>() {
 
 		@Override
 		public boolean matches(final Collection<String> identifiers, final List<String> scopes) {

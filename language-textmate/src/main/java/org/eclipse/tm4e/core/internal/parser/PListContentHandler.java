@@ -157,7 +157,7 @@ final class PListContentHandler<T> extends DefaultHandler {
             throws SAXException {
         assert localName != null;
 
-        final var currObject = this.currObject;
+        final @Nullable PListObject currObject = this.currObject;
         if (currObject == null) {
             throw new SAXException("Root <plist><dict> or <plist><array> element not found!");
         }
@@ -175,7 +175,7 @@ final class PListContentHandler<T> extends DefaultHandler {
                 break;
             case "dict":
             case "array":
-                final var parent = currObject.parent;
+                final @Nullable PListObject parent = currObject.parent;
                 if (parent != null) {
                     parent.addValue(currObject.values);
                     this.currObject = parent;

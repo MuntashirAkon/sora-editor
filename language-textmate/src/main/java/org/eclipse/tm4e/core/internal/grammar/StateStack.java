@@ -238,7 +238,7 @@ public final class StateStack implements IStateStack {
 
     @Override
     public String toString() {
-        final var r = new ArrayList<String>();
+        final ArrayList<String> r = new ArrayList<String>();
         _writeString(r);
         return '[' + String.join(", ", r) + ']';
     }
@@ -283,7 +283,7 @@ public final class StateStack implements IStateStack {
      * Used to warn of endless loops
      */
     boolean hasSameRuleAs(final StateStack other) {
-        var el = this;
+        StateStack el = this;
         while (el != null && el._enterPos == other._enterPos) {
             if (el.ruleId == other.ruleId) {
                 return true;

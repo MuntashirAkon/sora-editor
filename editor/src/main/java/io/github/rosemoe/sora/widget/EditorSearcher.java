@@ -24,6 +24,7 @@
 package io.github.rosemoe.sora.widget;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.widget.Toast;
 
 import androidx.annotation.IntRange;
@@ -37,7 +38,9 @@ import io.github.rosemoe.sora.R;
 import io.github.rosemoe.sora.event.ContentChangeEvent;
 import io.github.rosemoe.sora.event.PublishSearchResultEvent;
 import io.github.rosemoe.sora.event.SelectionChangeEvent;
+import io.github.rosemoe.sora.text.CharPosition;
 import io.github.rosemoe.sora.text.Content;
+import io.github.rosemoe.sora.text.Cursor;
 import io.github.rosemoe.sora.text.TextUtils;
 import io.github.rosemoe.sora.util.IntPair;
 import io.github.rosemoe.sora.util.LongArrayList;
@@ -127,7 +130,7 @@ public class EditorSearcher {
         if (currentThread != null && currentThread.isAlive()) {
             currentThread.interrupt();
         }
-        var runnable = new SearchRunnable(editor.getText(), searchOptions, currentPattern);
+        SearchRunnable runnable = new SearchRunnable(editor.getText(), searchOptions, currentPattern);
         currentThread = new Thread(runnable);
         currentThread.start();
     }
@@ -166,19 +169,19 @@ public class EditorSearcher {
      */
     public int getCurrentMatchedPositionIndex() {
         checkState();
-        var cur = editor.getCursor();
+        Cursor cur = editor.getCursor();
         if (!cur.isSelected()) {
             return -1;
         }
-        var left = cur.getLeft();
-        var right = cur.getRight();
+        int left = cur.getLeft();
+        int right = cur.getRight();
 
         if (isResultValid()) {
-            var res = lastResults;
+            LongArrayList res = lastResults;
             if (res == null) {
                 return -1;
             }
-            var packed = IntPair.pack(left, right);
+            long packed = IntPair.pack(left, right);
             int index = res.lowerBound(packed);
             if (index < res.size() && res.get(index) == packed) {
                 return index;
@@ -196,7 +199,7 @@ public class EditorSearcher {
         if (!isResultValid()) {
             return 0;
         }
-        var result = lastResults;
+        LongArrayList result = lastResults;
         return result == null ? 0 : result.size();
     }
 
@@ -209,20 +212,20 @@ public class EditorSearcher {
     public boolean gotoNext() {
         checkState();
         if (isResultValid()) {
-            var res = lastResults;
+            LongArrayList res = lastResults;
             if (res == null) {
                 return false;
             }
-            var right = editor.getCursor().getRight();
-            var index = res.lowerBoundByFirst(right);
+            int right = editor.getCursor().getRight();
+            int index = res.lowerBoundByFirst(right);
             if (index == res.size() && cyclicJumping) {
                 index = 0;
             }
             if (index < res.size()) {
-                var data = res.get(index);
-                var start = IntPair.getFirst(data);
-                var pos1 = editor.getText().getIndexer().getCharPosition(start);
-                var pos2 = editor.getText().getIndexer().getCharPosition(IntPair.getSecond(data));
+                long data = res.get(index);
+                int start = IntPair.getFirst(data);
+                CharPosition pos1 = editor.getText().getIndexer().getCharPosition(start);
+                CharPosition pos2 = editor.getText().getIndexer().getCharPosition(IntPair.getSecond(data));
                 editor.setSelectionRegion(pos1.line, pos1.column, pos2.line, pos2.column, SelectionChangeEvent.CAUSE_SEARCH);
                 return true;
             }
@@ -239,12 +242,12 @@ public class EditorSearcher {
     public boolean gotoPrevious() {
         checkState();
         if (isResultValid()) {
-            var res = lastResults;
+            LongArrayList res = lastResults;
             if (res == null || res.size() == 0) {
                 return false;
             }
-            var left = editor.getCursor().getLeft();
-            var index = res.lowerBoundByFirst(left);
+            int left = editor.getCursor().getLeft();
+            int index = res.lowerBoundByFirst(left);
             if (index == res.size() || IntPair.getFirst(res.get(index)) >= index) {
                 index --;
             }
@@ -252,10 +255,10 @@ public class EditorSearcher {
                 index = res.size() - 1;
             }
             if (index >= 0 && index < res.size()) {
-                var data = res.get(index);
-                var end = IntPair.getSecond(data);
-                var pos1 = editor.getText().getIndexer().getCharPosition(IntPair.getFirst(data));
-                var pos2 = editor.getText().getIndexer().getCharPosition(end);
+                long data = res.get(index);
+                int end = IntPair.getSecond(data);
+                CharPosition pos1 = editor.getText().getIndexer().getCharPosition(IntPair.getFirst(data));
+                CharPosition pos2 = editor.getText().getIndexer().getCharPosition(end);
                 editor.setSelectionRegion(pos1.line, pos1.column, pos2.line, pos2.column, SelectionChangeEvent.CAUSE_SEARCH);
                 return true;
             }
@@ -316,24 +319,24 @@ public class EditorSearcher {
             Toast.makeText(editor.getContext(), I18nConfig.getResourceId(R.string.sora_editor_editor_search_busy), Toast.LENGTH_SHORT).show();
             return;
         }
-        var context = editor.getContext();
-        final var dialog = ProgressDialog.show(context, I18nConfig.getString(context, R.string.sora_editor_replaceAll), I18nConfig.getString(context, R.string.sora_editor_editor_search_replacing), true, false);
-        final var res = lastResults;
+        Context context = editor.getContext();
+        final ProgressDialog dialog = ProgressDialog.show(context, I18nConfig.getString(context, R.string.sora_editor_replaceAll), I18nConfig.getString(context, R.string.sora_editor_editor_search_replacing), true, false);
+        final LongArrayList res = lastResults;
         new Thread(() -> {
             try {
-                var sb = editor.getText().toStringBuilder();
+                StringBuilder sb = editor.getText().toStringBuilder();
                 int newLength = replacement.length();
                 int delta = 0;
                 for (int i = 0; i < res.size(); i++) {
-                    var region = res.get(i);
-                    var start = IntPair.getFirst(region);
-                    var end = IntPair.getSecond(region);
-                    var oldLength = end - start;
+                    long region = res.get(i);
+                    int start = IntPair.getFirst(region);
+                    int end = IntPair.getSecond(region);
+                    int oldLength = end - start;
                     sb.replace(start + delta, end + delta, replacement);
                     delta += newLength - oldLength;
                 }
                 editor.postInLifecycle(() -> {
-                    var pos = editor.getCursor().left();
+                    CharPosition pos = editor.getCursor().left();
                     editor.getText().replace(0, 0, editor.getLineCount() - 1, editor.getText().getColumnCount(editor.getLineCount() - 1), sb);
                     editor.setSelectionAround(pos.line, pos.column);
                     dialog.dismiss();
@@ -421,14 +424,14 @@ public class EditorSearcher {
         @Override
         public void run() {
             localThread = Thread.currentThread();
-            var results = new LongArrayList();
-            var textLength = text.length();
-            var ignoreCase = searchOptions.ignoreCase;
-            var pattern = this.pattern;
+            LongArrayList results = new LongArrayList();
+            int textLength = text.length();
+            boolean ignoreCase = searchOptions.ignoreCase;
+            String pattern = this.pattern;
             switch (options.type) {
                 case SearchOptions.TYPE_NORMAL: {
                     int nextStart = 0;
-                    var patternLength = pattern.length();
+                    int patternLength = pattern.length();
                     while (nextStart != -1 && nextStart < textLength && checkNotCancelled()) {
                         nextStart = TextUtils.indexOf(text, pattern, ignoreCase, nextStart);
                         if (nextStart != -1) {
@@ -442,14 +445,14 @@ public class EditorSearcher {
                     pattern = "\\b" + Pattern.quote(pattern) + "\\b";
                     // fall-through
                 case SearchOptions.TYPE_REGULAR_EXPRESSION:
-                    var regex = Pattern.compile(pattern, (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.MULTILINE);
+                    Pattern regex = Pattern.compile(pattern, (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.MULTILINE);
                     int lastEnd = 0;
                     // Matcher will call toString() on input several times
-                    var string = text.toString();
-                    var matcher = regex.matcher(string);
+                    String string = text.toString();
+                    java.util.regex.Matcher matcher = regex.matcher(string);
                     while (lastEnd < textLength && matcher.find(lastEnd) && checkNotCancelled()) {
                         lastEnd = matcher.end();
-                        var start = matcher.start();
+                        int start = matcher.start();
                         if (start == lastEnd) {
                             // Do not match empty text
                             lastEnd ++;

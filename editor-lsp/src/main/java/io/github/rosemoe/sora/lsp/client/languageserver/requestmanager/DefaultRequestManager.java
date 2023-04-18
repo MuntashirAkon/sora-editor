@@ -601,7 +601,7 @@ public class DefaultRequestManager implements RequestManager {
     public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
         if (checkStatus()) {
             try {
-                var codeLensProvider = serverCapabilities.getCodeLensProvider();
+                org.eclipse.lsp4j.CodeLensOptions codeLensProvider = serverCapabilities.getCodeLensProvider();
                 return (codeLensProvider != null && (codeLensProvider.getResolveProvider() != null && codeLensProvider.getResolveProvider())) ? textDocumentService.resolveCodeLens(unresolved) : null;
             } catch (Exception e) {
                 crashed(e);

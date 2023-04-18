@@ -48,6 +48,7 @@ import io.github.rosemoe.sora.graphics.RectUtils;
 import io.github.rosemoe.sora.lang.styling.line.LineSideIcon;
 import io.github.rosemoe.sora.util.IntPair;
 import io.github.rosemoe.sora.widget.component.Magnifier;
+import io.github.rosemoe.sora.widget.layout.Row;
 import io.github.rosemoe.sora.widget.style.SelectionHandleStyle;
 
 /**
@@ -257,15 +258,15 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
             return;
         }
         if (magnifier.isEnabled()) {
-            var insertHandlePos = editor.getInsertHandleDescriptor().position;
-            var leftHandlePos = editor.getLeftHandleDescriptor().position;
-            var rightHandlePos = editor.getRightHandleDescriptor().position;
+            RectF insertHandlePos = editor.getInsertHandleDescriptor().position;
+            RectF leftHandlePos = editor.getLeftHandleDescriptor().position;
+            RectF rightHandlePos = editor.getRightHandleDescriptor().position;
             if (editor.isStickyTextSelection()) {
                 boolean isLeftHandle = selHandleType == SelectionHandle.LEFT;
                 boolean isRightHandle = selHandleType == SelectionHandle.RIGHT;
 
                 float x = 0, y = 0;
-                var height = Math.max(Math.max(insertHandlePos.height(), leftHandlePos.height()), rightHandlePos.height());
+                float height = Math.max(Math.max(insertHandlePos.height(), leftHandlePos.height()), rightHandlePos.height());
                 if (holdInsertHandle()) {
                     x = Math.abs(insertHandlePos.left - e.getX()) > editor.getRowHeight() ? insertHandlePos.left : e.getX();
                     y = insertHandlePos.top;
@@ -278,7 +279,7 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
                 }
                 magnifier.show((int) x, (int) (y - height / 2));
             } else {
-                var height = Math.max(Math.max(insertHandlePos.height(), leftHandlePos.height()), rightHandlePos.height());
+                float height = Math.max(Math.max(insertHandlePos.height(), leftHandlePos.height()), rightHandlePos.height());
                 magnifier.show((int) e.getX(), (int) (e.getY() - height / 2 - editor.getRowHeight()));
             }
         }
@@ -533,8 +534,8 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
         if (editor.isFormatting()) {
             return true;
         }
-        var resolved = RegionResolverKt.resolveTouchRegion(editor, e);
-        var region = IntPair.getFirst(resolved);
+        long resolved = RegionResolverKt.resolveTouchRegion(editor, e);
+        int region = IntPair.getFirst(resolved);
         long res = editor.getPointPositionOnScreen(e.getX(), e.getY());
         int line = IntPair.getFirst(res);
         int column = IntPair.getSecond(res);
@@ -542,9 +543,9 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
         if (region == RegionResolverKt.REGION_SIDE_ICON) {
             int row = (int) (e.getY() + editor.getOffsetX()) / editor.getRowHeight();
             row = Math.max(0, Math.min(row, editor.getLayout().getRowCount() - 1));
-            var inf = editor.getLayout().getRowAt(row);
+            Row inf = editor.getLayout().getRowAt(row);
             if (inf.isLeadingRow) {
-                var style = editor.getRenderer().getLineStyle(inf.lineIndex, LineSideIcon.class);
+                LineSideIcon style = editor.getRenderer().getLineStyle(inf.lineIndex, LineSideIcon.class);
                 if (style != null) {
                     if ((editor.dispatchEvent(new SideIconClickEvent(editor, style)) & InterceptTarget.TARGET_EDITOR) != 0) {
                         editor.hideAutoCompleteWindow();
@@ -558,7 +559,7 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
         }
         editor.showSoftInput();
         notifyLater();
-        var lnAction = editor.getProps().actionWhenLineNumberClicked;
+        int lnAction = editor.getProps().actionWhenLineNumberClicked;
         if (region == RegionResolverKt.REGION_TEXT) {
             editor.setSelection(line, column, SelectionChangeEvent.CAUSE_TAP);
         } else if (region == RegionResolverKt.REGION_LINE_NUMBER) {
@@ -613,7 +614,7 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
                 endY = scroller.getCurrY();
                 editor.getVerticalEdgeEffect().onPull(distance, !glowTopOrBottom ? displacement : 1 - displacement);
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                var edgeEffect = editor.getVerticalEdgeEffect();
+                android.widget.EdgeEffect edgeEffect = editor.getVerticalEdgeEffect();
                 edgeEffect.onPullDistance(distance, !glowTopOrBottom ? displacement : 1 - displacement);
                 if (edgeEffect.getDistance() != 0) {
                     endY = scroller.getCurrY();
@@ -630,7 +631,7 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
                 endX = scroller.getCurrX();
                 editor.getHorizontalEdgeEffect().onPull(distance, !glowLeftOrRight ? 1 - displacement : displacement);
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                var edgeEffect = editor.getHorizontalEdgeEffect();
+                android.widget.EdgeEffect edgeEffect = editor.getHorizontalEdgeEffect();
                 edgeEffect.onPullDistance(distance, !glowLeftOrRight ? 1 - displacement : displacement);
                 if (edgeEffect.getDistance() != 0) {
                     endX = scroller.getCurrX();
@@ -836,7 +837,7 @@ public final class EditorTouchEventHandler implements GestureDetector.OnGestureL
                 default:
                     descriptor = editor.getInsertHandleDescriptor();
             }
-            var anotherDesc = type == LEFT ? editor.getRightHandleDescriptor() : editor.getLeftHandleDescriptor();
+            SelectionHandleStyle.HandleDescriptor anotherDesc = type == LEFT ? editor.getRightHandleDescriptor() : editor.getLeftHandleDescriptor();
             float targetX = scroller.getCurrX() + e.getX() + (descriptor.alignment != SelectionHandleStyle.ALIGN_CENTER ? descriptor.position.width() : 0) * (descriptor.alignment == SelectionHandleStyle.ALIGN_LEFT ? 1 : -1);
             float targetY = scroller.getCurrY() + e.getY() - descriptor.position.height();
             int line = IntPair.getFirst(editor.getPointPosition(0, targetY));

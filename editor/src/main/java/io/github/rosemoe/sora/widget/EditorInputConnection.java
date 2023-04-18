@@ -151,7 +151,7 @@ class EditorInputConnection extends BaseInputConnection {
      * Get content region internally
      */
     private CharSequence getTextRegionInternal(int start, int end, int flags, boolean ignoreIPCLimit) {
-        var origin = editor.getText();
+        Content origin = editor.getText();
         if (start > end) {
             int tmp = start;
             start = end;
@@ -169,9 +169,9 @@ class EditorInputConnection extends BaseInputConnection {
         if (!ignoreIPCLimit && end - start > editor.getProps().maxIPCTextLength) {
             end = start + Math.max(0, editor.getProps().maxIPCTextLength);
         }
-        var sub = origin.subSequence(start, end).toString();
+        String sub = origin.subSequence(start, end).toString();
         if (flags == GET_TEXT_WITH_STYLES) {
-            var text = new SpannableStringBuilder(sub);
+            SpannableStringBuilder text = new SpannableStringBuilder(sub);
             // Apply composing span
             if (composingText.isComposing()) {
                 try {
@@ -203,7 +203,7 @@ class EditorInputConnection extends BaseInputConnection {
 
     protected CharSequence getTextRegion(int start, int end, int flags) {
         try {
-            var res = getTextRegionInternal(start, end, flags, false);
+            CharSequence res = getTextRegionInternal(start, end, flags, false);
             if (DEBUG)
                 logger.d("getTextRegion result:" + res);
             return res;
@@ -215,7 +215,7 @@ class EditorInputConnection extends BaseInputConnection {
 
     protected CharSequence getTextRegionUnlimited(int start, int end, int flags) {
         try {
-            var res = getTextRegionInternal(start, end, flags, true);
+            CharSequence res = getTextRegionInternal(start, end, flags, true);
             if (DEBUG)
                 logger.d("getTextRegion result:" + res);
             return res;
@@ -269,13 +269,13 @@ class EditorInputConnection extends BaseInputConnection {
     }
 
     protected void commitTextInternal(@NonNull CharSequence text, boolean applyAutoIndent) {
-        var composingStateBefore = composingText.isComposing();
+        boolean composingStateBefore = composingText.isComposing();
         // NOTE: Text styles are ignored by editor
         // Remove composing text first if there is
         if (editor.getProps().trackComposingTextOnCommit) {
             if (composingText.isComposing()) {
-                var composingText = editor.getText().subSequence(this.composingText.startIndex, this.composingText.endIndex).toString();
-                var commitText = text.toString();
+                String composingText = editor.getText().subSequence(this.composingText.startIndex, this.composingText.endIndex).toString();
+                String commitText = text.toString();
                 if (this.composingText.endIndex == getCursor().getLeft() && !getCursor().isSelected() && commitText.startsWith(composingText) && commitText.length() > composingText.length()) {
                     text = commitText.substring(composingText.length());
                     this.composingText.reset();
@@ -289,7 +289,7 @@ class EditorInputConnection extends BaseInputConnection {
         // replace text
         SymbolPairMatch.SymbolPair pair = null;
         if (editor.getProps().symbolPairAutoCompletion && text.length() > 0) {
-            var firstCharFromText = text.charAt(0);
+            char firstCharFromText = text.charAt(0);
 
             char[] inputText = null;
 
@@ -303,8 +303,8 @@ class EditorInputConnection extends BaseInputConnection {
                     inputText, firstCharFromText
             );
         }
-        var editorText = editor.getText();
-        var editorCursor = editor.getCursor();
+        Content editorText = editor.getText();
+        Cursor editorCursor = editor.getCursor();
 
         // newCursorPosition ignored
         // Call onCommitText() can make auto indent and delete text selected automatically
@@ -336,7 +336,7 @@ class EditorInputConnection extends BaseInputConnection {
             } else {
                 editorText.beginBatchEdit();
 
-                var insertPosition = editorText
+                CharPosition insertPosition = editorText
                         .getIndexer()
                         .getCharPosition(pair.getInsertOffset());
 
@@ -345,7 +345,7 @@ class EditorInputConnection extends BaseInputConnection {
                 editorText.insert(insertPosition.line, insertPosition.column + pair.open.length(), pair.close);
                 editorText.endBatchEdit();
 
-                var cursorPosition = editorText
+                CharPosition cursorPosition = editorText
                         .getIndexer()
                         .getCharPosition(pair.getCursorOffset());
 
@@ -519,13 +519,13 @@ class EditorInputConnection extends BaseInputConnection {
     }
 
     private void setComposingTextCompat(@NonNull String text) {
-        var content = editor.getText();
+        Content content = editor.getText();
         String current = content.substring(composingText.startIndex, composingText.endIndex);
         if (current.equals(text)) {
             return;
         }
         if (current.length() < text.length() && text.startsWith(current)) {
-            var pos = content.getIndexer().getCharPosition(composingText.endIndex);
+            CharPosition pos = content.getIndexer().getCharPosition(composingText.endIndex);
             content.insert(pos.line, pos.column, text.substring(current.length()));
         } else if (current.length() > text.length() && current.startsWith(text)) {
             content.delete(composingText.endIndex - (current.length() - text.length()), composingText.endIndex);
@@ -606,7 +606,7 @@ class EditorInputConnection extends BaseInputConnection {
             if (start < 0) {
                 start = 0;
             }
-            var content = editor.getText();
+            Content content = editor.getText();
             if (end > content.length()) {
                 end = content.length();
             }
@@ -703,9 +703,9 @@ class EditorInputConnection extends BaseInputConnection {
             throw new IllegalArgumentException("length < 0");
         }
         int startOffset = Math.max(0, getCursor().getLeft() - beforeLength);
-        var selStart = getCursor().getLeft();
+        int selStart = getCursor().getLeft();
         startOffset = Math.min(startOffset, selStart);
-        var text = getTextRegionUnlimited(startOffset, Math.min(editor.getText().length(), getCursor().getRight() + afterLength), flags);
+        CharSequence text = getTextRegionUnlimited(startOffset, Math.min(editor.getText().length(), getCursor().getRight() + afterLength), flags);
         return new SurroundingText(text, getCursor().getLeft() - startOffset, getCursor().getRight() - startOffset, startOffset);
     }
 

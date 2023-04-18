@@ -28,6 +28,8 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tm4e.core.grammar.IGrammar;
 import org.eclipse.tm4e.core.grammar.IStateStack;
+import org.eclipse.tm4e.core.grammar.IToken;
+import org.eclipse.tm4e.core.grammar.ITokenizeLineResult;
 import org.eclipse.tm4e.core.internal.grammar.StateStack;
 
 import com.google.common.base.Splitter;
@@ -69,15 +71,15 @@ public class TMTokenization implements ITokenizationSupport {
 		@Nullable final Duration timeLimit) {
 
 		final int offsetDelta = offsetDeltaOrNull == null ? 0 : offsetDeltaOrNull;
-		final var tokenizationResult = _grammar.tokenizeLine(line, state, timeLimit);
-		final var tokens = tokenizationResult.getTokens();
+		final ITokenizeLineResult<IToken[]> tokenizationResult = _grammar.tokenizeLine(line, state, timeLimit);
+		final IToken[] tokens = tokenizationResult.getTokens();
 
 		// Create the result early and fill in the tokens later
-		final var tmTokens = new ArrayList<TMToken>(tokens.length < 10 ? tokens.length : 10);
+		final ArrayList<TMToken> tmTokens = new ArrayList<TMToken>(tokens.length < 10 ? tokens.length : 10);
 		String lastTokenType = null;
-		for (final var token : tokens) {
+		for (final IToken token : tokens) {
 			final int tokenStartIndex = token.getStartIndex();
-			final var tokenType = decodeTextMateToken(this.decodeMap, token.getScopes());
+			final String tokenType = decodeTextMateToken(this.decodeMap, token.getScopes());
 
 			// do not push a new token if the type is exactly the same (also helps with ligatures)
 			if (!tokenType.equals(lastTokenType)) {
@@ -86,7 +88,7 @@ public class TMTokenization implements ITokenizationSupport {
 			}
 		}
 
-		final var lastToken = tokens[tokens.length - 1];
+		final IToken lastToken = tokens[tokens.length - 1];
 
 		return new TokenizationResult(
 			tmTokens,
@@ -101,11 +103,11 @@ public class TMTokenization implements ITokenizationSupport {
 	}
 
 	private String decodeTextMateToken(final DecodeMap decodeMap, final List<String> scopes) {
-		final var prevTokenScopes = decodeMap.prevToken.scopes;
+		final List<String> prevTokenScopes = decodeMap.prevToken.scopes;
 		final int prevTokenScopesLength = prevTokenScopes.size();
-		final var prevTokenScopeTokensMaps = decodeMap.prevToken.scopeTokensMaps;
+		final Map<Integer, Map<Integer, Boolean>> prevTokenScopeTokensMaps = decodeMap.prevToken.scopeTokensMaps;
 
-		final var scopeTokensMaps = new LinkedHashMap<Integer, Map<Integer, Boolean>>();
+		final LinkedHashMap<Integer, Map<Integer, Boolean>> scopeTokensMaps = new LinkedHashMap<Integer, Map<Integer, Boolean>>();
 		Map<Integer, Boolean> prevScopeTokensMaps = new LinkedHashMap<>();
 		boolean sameAsPrev = true;
 		for (int level = 1/* deliberately skip scope 0 */; level < scopes.size(); level++) {

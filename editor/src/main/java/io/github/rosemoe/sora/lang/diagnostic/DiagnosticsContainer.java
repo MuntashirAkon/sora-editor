@@ -75,7 +75,7 @@ public class DiagnosticsContainer {
      * @param endIndex   End index of query
      */
     public synchronized void queryInRegion(List<DiagnosticRegion> result, int startIndex, int endIndex) {
-        for (var region : regions) {
+        for (DiagnosticRegion region : regions) {
             if (region.endIndex > startIndex && region.startIndex <= endIndex) {
                 result.add(region);
             }
@@ -86,8 +86,8 @@ public class DiagnosticsContainer {
         if (!shiftEnabled) {
             return;
         }
-        var length = insertEnd - insertStart;
-        for (var region : regions) {
+        int length = insertEnd - insertStart;
+        for (DiagnosticRegion region : regions) {
             // Type 1, text is inserted inside a diagnostic
             if (region.startIndex <= insertStart && region.endIndex >= insertStart) {
                 region.endIndex += length;
@@ -105,12 +105,12 @@ public class DiagnosticsContainer {
         if (!shiftEnabled) {
             return;
         }
-        var length = deleteEnd - deleteStart;
-        var garbage = new ArrayList<DiagnosticRegion>();
-        for (var region : regions) {
+        int length = deleteEnd - deleteStart;
+        ArrayList<DiagnosticRegion> garbage = new ArrayList<DiagnosticRegion>();
+        for (DiagnosticRegion region : regions) {
             // Compute cross length
-            var sharedStart = Math.max(deleteStart, region.startIndex);
-            var sharedEnd = Math.min(deleteEnd, region.endIndex);
+            int sharedStart = Math.max(deleteStart, region.startIndex);
+            int sharedEnd = Math.min(deleteEnd, region.endIndex);
             if (sharedEnd <= sharedStart) {
                 // No shared region
                 if (region.startIndex >= deleteEnd) {
@@ -120,11 +120,11 @@ public class DiagnosticsContainer {
                 }
             } else {
                 // Has shared region
-                var sharedLength = sharedEnd - sharedStart;
+                int sharedLength = sharedEnd - sharedStart;
                 region.endIndex -= sharedLength;
                 if (region.startIndex > deleteStart) {
                     // Shift left
-                    var shiftLeftCount = region.startIndex - deleteStart;
+                    int shiftLeftCount = region.startIndex - deleteStart;
                     region.startIndex -= shiftLeftCount;
                     region.endIndex -= shiftLeftCount;
                 }

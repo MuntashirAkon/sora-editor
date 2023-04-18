@@ -26,6 +26,7 @@ package io.github.rosemoe.sora.widget.component;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.AdapterView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,8 +39,10 @@ import io.github.rosemoe.sora.lang.Language;
 import io.github.rosemoe.sora.lang.completion.CompletionCancelledException;
 import io.github.rosemoe.sora.lang.completion.CompletionItem;
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher;
+import io.github.rosemoe.sora.lang.styling.Styles;
 import io.github.rosemoe.sora.lang.styling.StylesUtils;
 import io.github.rosemoe.sora.text.CharPosition;
+import io.github.rosemoe.sora.text.Content;
 import io.github.rosemoe.sora.text.ContentReference;
 import io.github.rosemoe.sora.text.Cursor;
 import io.github.rosemoe.sora.text.TextReference;
@@ -108,7 +111,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
     }
 
     public boolean isCompletionInProgress() {
-        final var thread = completionThread;
+        final CompletionThread thread = completionThread;
         return super.isShowing() || requestShow > requestHide || (thread != null && thread.isAlive());
     }
 
@@ -137,7 +140,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
             return;
         }
         requestShow = System.currentTimeMillis();
-        final var requireRequest = requestTime;
+        final long requireRequest = requestTime;
         editor.postDelayedInLifecycle(() -> {
             if (requestHide < requestShow && requestTime == requireRequest) {
                 super.show();
@@ -190,7 +193,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
      * Move selection down
      */
     public void moveDown() {
-        var adpView = layout.getCompletionList();
+        AdapterView adpView = layout.getCompletionList();
         if (currentSelection + 1 >= adpView.getAdapter().getCount()) {
             return;
         }
@@ -203,7 +206,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
      * Move selection up
      */
     public void moveUp() {
-        var adpView = layout.getCompletionList();
+        AdapterView adpView = layout.getCompletionList();
         if (currentSelection - 1 < 0) {
             return;
         }
@@ -246,10 +249,10 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
         if (pos == -1) {
             return false;
         }
-        var adpView = layout.getCompletionList();
-        var item = ((EditorCompletionAdapter) adpView.getAdapter()).getItem(pos);
+        AdapterView adpView = layout.getCompletionList();
+        CompletionItem item = ((EditorCompletionAdapter) adpView.getAdapter()).getItem(pos);
         Cursor cursor = editor.getCursor();
-        final var completionThread = this.completionThread;
+        final CompletionThread completionThread = this.completionThread;
         if (!cursor.isSelected() && completionThread != null) {
             cancelShowUp = true;
             editor.restartInput();
@@ -268,7 +271,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
      * Stop previous completion thread
      */
     public void cancelCompletion() {
-        var previous = completionThread;
+        CompletionThread previous = completionThread;
         if (previous != null && previous.isAlive()) {
             previous.cancel();
             previous.requestTimestamp = -1;
@@ -281,8 +284,8 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
      * If {@link io.github.rosemoe.sora.lang.styling.TextStyle#NO_COMPLETION_BIT} is set, true is returned.
      */
     public boolean checkNoCompletion() {
-        var pos = editor.getCursor().left();
-        var styles = editor.getStyles();
+        CharPosition pos = editor.getCursor().left();
+        Styles styles = editor.getStyles();
         return StylesUtils.checkNoCompletion(styles, pos);
     }
 
@@ -293,7 +296,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
         if (cancelShowUp || !isEnabled()) {
             return;
         }
-        var text = editor.getText();
+        Content text = editor.getText();
         if (text.getCursor().isSelected() || checkNoCompletion()) {
             hide();
             return;
@@ -307,7 +310,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
         requestTime = System.nanoTime();
         currentSelection = -1;
         publisher = new CompletionPublisher(editor.getHandler(), () -> {
-            var items = publisher.getItems();
+            List<CompletionItem> items = publisher.getItems();
             if (lastAttachedItems == null || lastAttachedItems.get() != items) {
                 adapter.attachValues(this, items);
                 adapter.notifyDataSetInvalidated();
@@ -365,7 +368,7 @@ public class EditorAutoCompletion extends EditorPopupWindow implements EditorBui
          */
         public void cancel() {
             isAborted = true;
-            var level = targetLanguage.getInterruptionLevel();
+            int level = targetLanguage.getInterruptionLevel();
             if (level == Language.INTERRUPTION_LEVEL_STRONG) {
                 interrupt();
             }

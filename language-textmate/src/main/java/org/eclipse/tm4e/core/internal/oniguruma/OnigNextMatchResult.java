@@ -36,7 +36,7 @@ public final class OnigNextMatchResult {
 
 	private OnigCaptureIndex[] captureIndicesOfMatch(final OnigResult result, final OnigString source) {
 		final int resultCount = result.count();
-		final var captures = new OnigCaptureIndex[resultCount];
+		final OnigCaptureIndex[] captures = new OnigCaptureIndex[resultCount];
 		for (int i = 0; i < resultCount; i++) {
 			final int loc = result.locationAt(i);
 			final int captureStart = source.getCharIndexOfByte(loc);
@@ -52,7 +52,7 @@ public final class OnigNextMatchResult {
 			return true;
 		if (obj == null || getClass() != obj.getClass())
 			return false;
-		final var other = (OnigNextMatchResult) obj;
+		final OnigNextMatchResult other = (OnigNextMatchResult) obj;
 		return index == other.index
 				&& Arrays.equals(captureIndices, other.captureIndices);
 	}
@@ -76,7 +76,7 @@ public final class OnigNextMatchResult {
 
 	@Override
 	public String toString() {
-		final var result = new StringBuilder("{\n");
+		final StringBuilder result = new StringBuilder("{\n");
 		result.append("  \"index\": ");
 		result.append(getIndex());
 		result.append(",\n");

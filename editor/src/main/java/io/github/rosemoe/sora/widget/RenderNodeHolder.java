@@ -30,11 +30,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
 import io.github.rosemoe.sora.lang.analysis.StyleUpdateRange;
 import io.github.rosemoe.sora.lang.styling.EmptyReader;
+import io.github.rosemoe.sora.lang.styling.Spans;
+import io.github.rosemoe.sora.lang.styling.Styles;
 import io.github.rosemoe.sora.util.ArrayList;
 
 /**
@@ -60,10 +63,10 @@ class RenderNodeHolder {
     }
 
     public boolean invalidateInRegion(@NonNull StyleUpdateRange range) {
-        var res = false;
-        var itr = cache.iterator();
+        boolean res = false;
+        Iterator<TextRenderNode> itr = cache.iterator();
         while (itr.hasNext()) {
-            var element = itr.next();
+            TextRenderNode element = itr.next();
             if (range.isInRange(element.line)) {
                 itr.remove();
                 element.renderNode.discardDisplayList();
@@ -75,10 +78,10 @@ class RenderNodeHolder {
     }
 
     public boolean invalidateInRegion(int startLine, int endLine) {
-        var res = false;
-        var itr = cache.iterator();
+        boolean res = false;
+        Iterator<TextRenderNode> itr = cache.iterator();
         while (itr.hasNext()) {
-            var element = itr.next();
+            TextRenderNode element = itr.next();
             if (element.line >= startLine) {
                 itr.remove();
                 element.renderNode.discardDisplayList();
@@ -99,15 +102,15 @@ class RenderNodeHolder {
     }
 
     public TextRenderNode getNode(int line) {
-        var size = cache.size();
+        int size = cache.size();
         for (int i = 0; i < size; i++) {
-            var node = cache.get(i);
+            TextRenderNode node = cache.get(i);
             if (node.line == line) {
                 Collections.swap(cache, 0, i);
                 return node;
             }
         }
-        var node = pool.isEmpty() ? new TextRenderNode(line) : pool.pop();
+        TextRenderNode node = pool.isEmpty() ? new TextRenderNode(line) : pool.pop();
         node.line = line;
         node.isDirty = true;
         cache.add(0, node);
@@ -115,9 +118,9 @@ class RenderNodeHolder {
     }
 
     public void keepCurrentInDisplay(int start, int end) {
-        var itr = cache.iterator();
+        Iterator<TextRenderNode> itr = cache.iterator();
         while (itr.hasNext()) {
-            var node = itr.next();
+            TextRenderNode node = itr.next();
             if (node.line < start || node.line > end) {
                 itr.remove();
                 node.renderNode.discardDisplayList();
@@ -129,12 +132,12 @@ class RenderNodeHolder {
         if (!canvas.isHardwareAccelerated()) {
             throw new UnsupportedOperationException("Only hardware-accelerated canvas can be used");
         }
-        var styles = editor.getStyles();
+        Styles styles = editor.getStyles();
         // It's safe to use row directly because the mode is non-wordwrap
-        var node = getNode(line);
+        TextRenderNode node = getNode(line);
         if (node.needsRecord()) {
-            var spans = styles == null ? null : styles.spans;
-            var reader = spans == null ? new EmptyReader() : spans.read();
+            Spans spans = styles == null ? null : styles.spans;
+            Spans.Reader reader = spans == null ? new EmptyReader() : spans.read();
             try {
                 reader.moveToLine(line);
             } catch (Exception e) {

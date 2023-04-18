@@ -416,18 +416,18 @@ public class LanguageServerWrapper {
      */
     public void connect(LspEditor editor) {
 
-        var uri = editor.getCurrentFileUri();
+        String uri = editor.getCurrentFileUri();
         if (connectedEditors.contains(editor)) {
             return;
         }
-        var key = new Pair<>(uri, editor.getProjectPath());
+        Pair<String, String> key = new Pair<>(uri, editor.getProjectPath());
 
         uriToLanguageServerWrapper.put(key, this);
 
         start();
 
         if (initializeFuture != null) {
-            var capabilities = getServerCapabilities();
+            ServerCapabilities capabilities = getServerCapabilities();
             if (capabilities == null) {
                 Log.w(TAG, "Capabilities are null for " + serverDefinition);
                 return;
@@ -443,7 +443,7 @@ public class LanguageServerWrapper {
                         synchronized (toConnect) {
                             toConnect.remove(editor);
                         }
-                        var textDocumentSyncKind = syncOptions.isLeft() ? syncOptions.getLeft() : syncOptions.getRight().getChange();
+                        TextDocumentSyncKind textDocumentSyncKind = syncOptions.isLeft() ? syncOptions.getLeft() : syncOptions.getRight().getChange();
                         textDocumentSyncKind = textDocumentSyncKind == null ? TextDocumentSyncKind.Full : textDocumentSyncKind;
 
                         editor.setSyncOptions(textDocumentSyncKind);

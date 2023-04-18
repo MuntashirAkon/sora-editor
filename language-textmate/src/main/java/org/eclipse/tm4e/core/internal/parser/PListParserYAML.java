@@ -60,7 +60,7 @@ public final class PListParserYAML<T> implements PListParser<T> {
             pList.startElement(null, "key", null, null);
             pList.characters(entry.getKey());
             pList.endElement(null, "key", null);
-            var value = entry.getValue();
+            Object value = entry.getValue();
             if (value instanceof List) {
                 addListToPList(pList, (List) value);
             } else if (value instanceof Map) {
@@ -81,7 +81,7 @@ public final class PListParserYAML<T> implements PListParser<T> {
 
     @Override
     public T parse(final Reader contents) throws SAXException, YAMLException {
-        final var pList = new PListContentHandler<T>(objectFactory);
+        final PListContentHandler<T> pList = new PListContentHandler<T>(objectFactory);
         pList.startElement(null, "plist", null, null);
         addMapToPList(pList, new Yaml().loadAs(contents, Map.class));
         pList.endElement(null, "plist", null);

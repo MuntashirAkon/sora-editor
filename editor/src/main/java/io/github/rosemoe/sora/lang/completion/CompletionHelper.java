@@ -40,7 +40,7 @@ public class CompletionHelper {
      */
     public static String computePrefix(ContentReference ref, CharPosition pos, PrefixChecker checker) {
         int begin = pos.column;
-        var line = ref.getLine(pos.line);
+        String line = ref.getLine(pos.line);
         for (; begin > 0; begin--) {
             if (!checker.check(line.charAt(begin - 1))) {
                 break;
@@ -54,7 +54,7 @@ public class CompletionHelper {
      * Return true if it is cancelled by editor.
      */
     public static boolean checkCancelled() {
-        var thread = Thread.currentThread();
+        Thread thread = Thread.currentThread();
         if (thread instanceof EditorAutoCompletion.CompletionThread) {
             return ((EditorAutoCompletion.CompletionThread) thread).isCancelled();
         } else {

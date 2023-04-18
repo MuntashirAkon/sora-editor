@@ -54,7 +54,7 @@ public class SimpleSnippetCompletionItem extends CompletionItem {
     @Override
     public void performCompletion(@NonNull CodeEditor editor, @NonNull Content text, @NonNull CharPosition position) {
         int prefixLength = snippet.getSelectedLength();
-        var selectedText = text.subSequence(position.index - prefixLength, position.index).toString();
+        String selectedText = text.subSequence(position.index - prefixLength, position.index).toString();
         int actionIndex = position.index;
         if (snippet.getDeleteSelected()) {
             text.delete(position.index - prefixLength, position.index);

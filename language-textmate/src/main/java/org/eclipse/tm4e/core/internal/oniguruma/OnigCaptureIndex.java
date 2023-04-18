@@ -36,7 +36,7 @@ public final class OnigCaptureIndex {
 			return true;
 		if (obj == null || getClass() != obj.getClass())
 			return false;
-		final var other = (OnigCaptureIndex) obj;
+		final OnigCaptureIndex other = (OnigCaptureIndex) obj;
 		return end == other.end
 				&& index == other.index
 				&& start == other.start;

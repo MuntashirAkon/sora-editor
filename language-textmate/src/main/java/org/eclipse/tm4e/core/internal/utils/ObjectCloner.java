@@ -12,7 +12,6 @@ package org.eclipse.tm4e.core.internal.utils;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -32,7 +31,7 @@ import com.google.common.cache.LoadingCache;
 public final class ObjectCloner {
 
     private static final LoadingCache<Class<?>, Optional<Method>> CLONE_METHODS = CacheBuilder.newBuilder().weakKeys()
-            .build(new CacheLoader<>() {
+            .build(new CacheLoader<Class<?>, Optional<Method>>() {
                 @Override
                 public Optional<Method> load(final Class<?> cls) {
                     try {
@@ -55,38 +54,41 @@ public final class ObjectCloner {
             return (T) clone;
 
         if (obj instanceof List<?>) {
-            var list = (List<T>) obj;
-            final var listClone = shallowClone(list, () -> new ArrayList<>(list));
+            List<T> list = (List<T>) obj;
+            final List<T> listClone = shallowClone(list, () -> new ArrayList<>(list));
             clones.put(list, listClone);
-            for (var i = 0; i < listClone.size(); ++i) {
+            for (int i = 0; i < listClone.size(); ++i) {
                 listClone.set(i, deepCloneNullable(listClone.get(i), clones));
             }
             return (T) listClone;
         }
 
         if (obj instanceof Set<?>) {
-            var set = (Set<T>) obj;
-            final var setClone = (Set<@Nullable Object>) shallowClone(set, HashSet::new);
+            Set<T> set = (Set<T>) obj;
+            final Set<@Nullable Object> setClone = (Set<@Nullable Object>) shallowClone(set, HashSet::new);
             clones.put(set, setClone);
             setClone.clear();
-            for (final var e : set) {
+            for (final T e : set) {
                 setClone.add(deepCloneNullable(e, clones));
             }
             return (T) setClone;
         }
 
         if (obj instanceof Map<?, ?>) {
-            var map = (Map<?, T>) obj;
-            final var mapClone = shallowClone(map, () -> new HashMap<>(map));
+            Map<?, T> map = (Map<?, T>) obj;
+            final HashMap<?, T> mapClone = (HashMap<?, T>) shallowClone(map, () -> new HashMap<Object, T>(map));
             clones.put(map, mapClone);
-            mapClone.replaceAll((k, v) -> deepCloneNullable(v, clones));
+            // Replacement for mapClone.replaceAll((k, v) -> deepCloneNullable(v, clones));
+            for (Map.Entry<?, T> entry : mapClone.entrySet()) {
+                entry.setValue(deepCloneNullable(entry.getValue(), clones));
+            }
             return (T) mapClone;
         }
 
         if (obj.getClass().isArray()) {
             final int len = Array.getLength(obj);
-            final var arrayType = obj.getClass().getComponentType();
-            final var arrayClone = Array.newInstance(arrayType, len);
+            final Class<?> arrayType = obj.getClass().getComponentType();
+            final Object arrayClone = Array.newInstance(arrayType, len);
             clones.put(obj, arrayClone);
             for (int i = 0; i < len; i++) {
                 Array.set(arrayClone, i, deepCloneNullable(Array.get(obj, i), clones));
@@ -94,7 +96,7 @@ public final class ObjectCloner {
             return (T) arrayClone;
         }
 
-        final var shallowClone = shallowClone(obj, () -> obj);
+        final T shallowClone = shallowClone(obj, () -> obj);
         clones.put(obj, shallowClone);
         return obj;
     }
@@ -109,10 +111,10 @@ public final class ObjectCloner {
 
     @SuppressWarnings("unchecked")
     private static <@NonNull T> T shallowClone(final T obj, final Supplier<T> fallback) {
-        final var objClass = obj.getClass();
+        final Class<?> objClass = obj.getClass();
         if (obj instanceof Cloneable) {
             try {
-                final var cloneMethod = CLONE_METHODS.get(objClass);
+                final Optional<Method> cloneMethod = CLONE_METHODS.get(objClass);
                 if (cloneMethod.isPresent()) {
                     return (T) cloneMethod.get().invoke(obj);
                 }

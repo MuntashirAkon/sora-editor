@@ -27,7 +27,9 @@
 
  import androidx.annotation.NonNull;
 
+ import org.eclipse.lsp4j.CompletionItemLabelDetails;
  import org.eclipse.lsp4j.InsertTextFormat;
+ import org.eclipse.lsp4j.Position;
  import org.eclipse.lsp4j.TextEdit;
 
  import java.util.List;
@@ -35,6 +37,7 @@
  import io.github.rosemoe.sora.lang.completion.CompletionItem;
  import io.github.rosemoe.sora.lang.completion.CompletionItemKind;
  import io.github.rosemoe.sora.lang.completion.SimpleCompletionIconDrawer;
+ import io.github.rosemoe.sora.lang.completion.snippet.CodeSnippet;
  import io.github.rosemoe.sora.lang.completion.snippet.parser.CodeSnippetParser;
  import io.github.rosemoe.sora.lsp.operations.document.ApplyEditsProvider;
  import io.github.rosemoe.sora.lsp.utils.LspUtils;
@@ -56,7 +59,7 @@
          this.applyEditsFeature = applyEditsFeature;
          this.kind = completionItem.getKind() == null ? CompletionItemKind.Text : CompletionItemKind.valueOf(completionItem.getKind().name());
          this.sortText = completionItem.getSortText();
-         var labelDetails = commitItem.getLabelDetails();
+         CompletionItemLabelDetails labelDetails = commitItem.getLabelDetails();
          if (labelDetails != null && labelDetails.getDescription() != null) {
              this.desc = labelDetails.getDescription();
          }
@@ -67,7 +70,7 @@
      @Override
      public void performCompletion(@NonNull CodeEditor editor, @NonNull Content text, CharPosition position) {
 
-         var textEdit = new TextEdit();
+         TextEdit textEdit = new TextEdit();
 
 
          textEdit.setRange(LspUtils.createRange(LspUtils.createPosition(position.line, position.column - prefixLength), LspUtils.createPosition(position)));
@@ -89,8 +92,8 @@
 
 
          { // workaround https://github.com/Microsoft/vscode/issues/17036
-             var start = textEdit.getRange().getStart();
-             var end = textEdit.getRange().getEnd();
+             Position start = textEdit.getRange().getStart();
+             Position end = textEdit.getRange().getEnd();
              if (start.getLine() > end.getLine() || (start.getLine() == end.getLine() && start.getCharacter() > end.getCharacter())) {
                  textEdit.getRange().setEnd(start);
                  textEdit.getRange().setStart(end);
@@ -98,10 +101,10 @@
          }
 
          { // allow completion items to be wrong with a too wide range
-             var documentEnd = LspUtils.createPosition(
+             Position documentEnd = LspUtils.createPosition(
                      text.getLineCount() - 1, text.getColumnCount(Math.max(0, position.line - 1))
              );
-             var textEditEnd = textEdit.getRange().getEnd();
+             Position textEditEnd = textEdit.getRange().getEnd();
              if (documentEnd.getLine() < textEditEnd.getLine()
                      || (documentEnd.getLine() == textEditEnd.getLine() && documentEnd.getCharacter() < textEditEnd.getCharacter())) {
                  textEdit.getRange().setEnd(documentEnd);
@@ -109,15 +112,15 @@
          }
 
 
-         var finalTextEdit = textEdit;
+         TextEdit finalTextEdit = textEdit;
 
          Runnable runnable = () -> applyEditsFeature.execute(new Pair<>(List.of(finalTextEdit), text));
 
          if (commitItem.getInsertTextFormat() == InsertTextFormat.Snippet) {
-             var codeSnippet = CodeSnippetParser.parse(textEdit.getNewText());
-             var startIndex = text.getCharIndex(textEdit.getRange().getStart().getLine(), textEdit.getRange().getStart().getCharacter());
-             var endIndex = text.getCharIndex(textEdit.getRange().getEnd().getLine(), textEdit.getRange().getEnd().getCharacter());
-             var selectedText = text.subSequence(startIndex, endIndex).toString();
+             CodeSnippet codeSnippet = CodeSnippetParser.parse(textEdit.getNewText());
+             int startIndex = text.getCharIndex(textEdit.getRange().getStart().getLine(), textEdit.getRange().getStart().getCharacter());
+             int endIndex = text.getCharIndex(textEdit.getRange().getEnd().getLine(), textEdit.getRange().getEnd().getCharacter());
+             String selectedText = text.subSequence(startIndex, endIndex).toString();
 
              text.delete(startIndex, endIndex);
              runnable = () -> editor.getSnippetController()

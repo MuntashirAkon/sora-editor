@@ -25,6 +25,8 @@ package io.github.rosemoe.sora.widget.snippet.variable;
 
 import androidx.annotation.NonNull;
 
+import io.github.rosemoe.sora.text.Content;
+import io.github.rosemoe.sora.text.Cursor;
 import io.github.rosemoe.sora.text.ICUUtils;
 import io.github.rosemoe.sora.util.IntPair;
 import io.github.rosemoe.sora.widget.CodeEditor;
@@ -60,13 +62,13 @@ public class EditorBasedSnippetVariableResolver implements ISnippetVariableResol
             case "CURSOR_NUMBER":
                 return Integer.toString(editor.getCursor().getLeft() + 1);
             case "TM_CURRENT_WORD": {
-                var text = editor.getText();
-                var res = ICUUtils.getWordEdges(text.getLine(text.getCursor().getLeftLine()), text.getCursor().getLeftColumn(), true);
+                Content text = editor.getText();
+                long res = ICUUtils.getWordEdges(text.getLine(text.getCursor().getLeftLine()), text.getCursor().getLeftColumn(), true);
                 return text.getLine(text.getCursor().getLeftLine()).subSequence(IntPair.getFirst(res), IntPair.getSecond(res)).toString();
             }
             case "SELECTION":
             case "TM_SELECTED_TEXT": {
-                var cursor = editor.getCursor();
+                Cursor cursor = editor.getCursor();
                 return editor.getText().subSequence(cursor.getLeft(), cursor.getRight()).toString();
             }
         }

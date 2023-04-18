@@ -79,7 +79,7 @@ public final class DiagnosticRegion implements Comparable<DiagnosticRegion> {
 
     @Override
     public int compareTo(DiagnosticRegion o) {
-        var cmp = Integer.compare(startIndex, o.startIndex);
+        int cmp = Integer.compare(startIndex, o.startIndex);
         if (cmp == 0) {
             cmp = Integer.compare(endIndex, o.endIndex);
         }

@@ -23,6 +23,7 @@
  */
 package io.github.rosemoe.sora.widget.snippet.variable;
 
+import android.content.ClipData;
 import android.content.ClipboardManager;
 
 import androidx.annotation.NonNull;
@@ -47,7 +48,7 @@ public class ClipboardBasedSnippetVariableResolver implements ISnippetVariableRe
     public String resolve(@NonNull String name) {
         if ("CLIPBOARD".equals(name)) {
             if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
-                var clip = clipboardManager.getPrimaryClip();
+                ClipData clip = clipboardManager.getPrimaryClip();
                 if (clip == null || clip.getItemCount() == 0) {
                     return "";
                 }

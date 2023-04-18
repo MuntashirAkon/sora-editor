@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jdt.annotation.Nullable;
@@ -55,8 +56,8 @@ final class BasicScopeAttributesProvider {
 		}
 
 		return cache.computeIfAbsent(scopeName, scopeName2 -> {
-			final var languageId = this._scopeToLanguage(scopeName);
-			final var standardTokenType = _toStandardTokenType(scopeName);
+			final int languageId = this._scopeToLanguage(scopeName);
+			final int standardTokenType = _toStandardTokenType(scopeName);
 			return new BasicScopeAttributes(languageId, standardTokenType);
 		});
 	}
@@ -72,7 +73,7 @@ final class BasicScopeAttributesProvider {
 	}
 
 	private static int /*OptionalStandardTokenType*/ _toStandardTokenType(final String scopeName) {
-		final var m = STANDARD_TOKEN_TYPE_REGEXP.matcher(scopeName);
+		final java.util.regex.Matcher m = STANDARD_TOKEN_TYPE_REGEXP.matcher(scopeName);
 		if (!m.find()) {
 			return OptionalStandardTokenType.NotSet;
 		}
@@ -113,7 +114,7 @@ final class BasicScopeAttributesProvider {
 				this.values = new HashMap<>(values);
 
 				// create the regex
-				final var escapedScopes = values.keySet().stream()
+				final String[] escapedScopes = values.keySet().stream()
 					.map(RegexSource::escapeRegExpCharacters)
 					.sorted(Collections.reverseOrder()) // Longest scope first
 					.toArray(String[]::new);
@@ -124,11 +125,11 @@ final class BasicScopeAttributesProvider {
 
 		@Nullable
 		TValue match(final String scopeName) {
-			final var scopesRegExp = this.scopesRegExp;
+			final @Nullable Pattern scopesRegExp = this.scopesRegExp;
 			if (scopesRegExp == null) {
 				return null;
 			}
-			final var m = scopesRegExp.matcher(scopeName);
+			final Matcher m = scopesRegExp.matcher(scopeName);
 			if (!m.find()) {
 				// no scopes matched
 				return null;

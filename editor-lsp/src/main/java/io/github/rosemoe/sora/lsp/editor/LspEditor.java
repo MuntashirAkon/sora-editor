@@ -30,6 +30,7 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.services.LanguageServer;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -133,7 +134,7 @@ public class LspEditor {
         currentEditor.setEditorLanguage(currentLanguage);
         signatureHelpWindowWeakReference = new WeakReference<>(new SignatureHelpWindow(currentEditor));
 
-        var subscriptionReceipt = currentEditor.subscribeEvent(ContentChangeEvent.class, editorContentChangeEventReceiver);
+        io.github.rosemoe.sora.event.SubscriptionReceipt<ContentChangeEvent> subscriptionReceipt = currentEditor.subscribeEvent(ContentChangeEvent.class, editorContentChangeEventReceiver);
 
         unsubscribeFunction = subscriptionReceipt::unsubscribe;
 
@@ -159,7 +160,7 @@ public class LspEditor {
     public void setWrapperLanguage(Language wrapperLanguage) {
         this.wrapperLanguage = wrapperLanguage;
         currentLanguage.setWrapperLanguage(wrapperLanguage);
-        var editor = currentEditor.get();
+        CodeEditor editor = currentEditor.get();
         if (editor != null) {
             setEditor(editor);
         }
@@ -230,7 +231,7 @@ public class LspEditor {
         //options
 
         // formatting
-        var formattingOptions = new FormattingOptions();
+        FormattingOptions formattingOptions = new FormattingOptions();
         formattingOptions.setTabSize(4);
         formattingOptions.setInsertSpaces(true);
         providerManager.addOption(formattingOptions);
@@ -249,7 +250,7 @@ public class LspEditor {
 
 
     private void setupLanguageServerWrapper() {
-        var languageServerWrapper = LanguageServerWrapper.forProject(projectPath);
+        LanguageServerWrapper languageServerWrapper = LanguageServerWrapper.forProject(projectPath);
         languageServerWrapper = languageServerWrapper != null ? languageServerWrapper : new LanguageServerWrapper(serverDefinition, projectPath);
         languageServerWrapper.serverDefinition = serverDefinition;
         this.languageServerWrapper = languageServerWrapper;
@@ -268,7 +269,7 @@ public class LspEditor {
 
         languageServerWrapper.start();
         //wait for language server start
-        var server = languageServerWrapper.getServer();
+        LanguageServer server = languageServerWrapper.getServer();
         if (server == null) {
             throw new TimeoutException("Unable to connect language server");
         }
@@ -286,8 +287,8 @@ public class LspEditor {
 
         setupLanguageServerWrapper();
 
-        var start = System.currentTimeMillis();
-        var retryTime = Timeout.getTimeout(Timeouts.INIT);
+        long start = System.currentTimeMillis();
+        int retryTime = Timeout.getTimeout(Timeouts.INIT);
         long maxRetryTime = start + retryTime;
 
         while (start < maxRetryTime) {
@@ -367,7 +368,7 @@ public class LspEditor {
     public void disconnect() {
         if (languageServerWrapper != null) {
             try {
-                var feature = getProviderManager().useProvider(DocumentCloseProvider.class);
+                DocumentCloseProvider feature = getProviderManager().useProvider(DocumentCloseProvider.class);
                 if (feature != null) feature.execute(null).get();
 
                 ForkJoinPool.commonPool().execute(() -> languageServerWrapper.disconnect(this));
@@ -379,11 +380,11 @@ public class LspEditor {
     }
 
     public void showSignatureHelp(SignatureHelp signatureHelp) {
-        var signatureHelpWindow = signatureHelpWindowWeakReference.get();
+        SignatureHelpWindow signatureHelpWindow = signatureHelpWindowWeakReference.get();
         if (signatureHelpWindow == null) {
             return;
         }
-        var editor = currentEditor.get();
+        CodeEditor editor = currentEditor.get();
         if (editor == null) {
             return;
         }
@@ -476,7 +477,7 @@ public class LspEditor {
     }
 
     public boolean hitRetrigger(CharSequence eventText) {
-        for (var trigger : signatureHelpRetriggers) {
+        for (String trigger : signatureHelpRetriggers) {
             if (trigger.contains(eventText)) {
                 return true;
             }
@@ -485,7 +486,7 @@ public class LspEditor {
     }
 
     public boolean hitTrigger(CharSequence eventText) {
-        for (var trigger : signatureHelpTriggers) {
+        for (String trigger : signatureHelpTriggers) {
             if (trigger.contains(eventText)) {
                 return true;
             }
@@ -494,7 +495,7 @@ public class LspEditor {
     }
 
     public boolean isShowSignatureHelp() {
-        var signatureHelpWindow = signatureHelpWindowWeakReference.get();
+        SignatureHelpWindow signatureHelpWindow = signatureHelpWindowWeakReference.get();
         if (signatureHelpWindow == null) {
             return false;
         }

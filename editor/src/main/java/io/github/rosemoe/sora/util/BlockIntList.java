@@ -69,7 +69,7 @@ public class BlockIntList {
 
     private void computeMax() {
         max = 0;
-        var block = head;
+        Block block = head;
         while (block != null) {
             max = Math.max(max, block.max);
             block = block.next;
@@ -141,7 +141,7 @@ public class BlockIntList {
         findBlock1(index);
         invalidateCacheFrom(index);
         // Find the block
-        var block = foundBlock;
+        Block block = foundBlock;
         index = foundIndex;
         while (index > block.size()) {
             if (block.next == null) {
@@ -201,7 +201,7 @@ public class BlockIntList {
             throw new ArrayIndexOutOfBoundsException("index = " + index + ", length = " + size());
         }
         findBlock1(index);
-        var old = foundBlock.set(foundIndex, element);
+        int old = foundBlock.set(foundIndex, element);
         modCount++;
         return old;
     }
@@ -318,7 +318,7 @@ public class BlockIntList {
         }
 
         public int remove(int index) {
-            var oldValue = data[index];
+            int oldValue = data[index];
             System.arraycopy(data, index + 1, data, index, size - index - 1);
             size--;
             if (oldValue == max) {

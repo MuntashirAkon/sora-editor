@@ -50,7 +50,7 @@ public class LspEditorManager {
     private static final Map<String, LspEditorManager> managers = new HashMap<>();
 
     public static LspEditorManager getOrCreateEditorManager(String projectPath) {
-        var manager = managers.get(projectPath);
+        LspEditorManager manager = managers.get(projectPath);
         if (manager == null) {
             manager = new LspEditorManager(projectPath);
             managers.put(projectPath, manager);

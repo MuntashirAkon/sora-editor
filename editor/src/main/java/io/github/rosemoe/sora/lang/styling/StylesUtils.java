@@ -35,14 +35,14 @@ public class StylesUtils {
      * If {@link io.github.rosemoe.sora.lang.styling.TextStyle#NO_COMPLETION_BIT} is set, true is returned.
      */
     public static boolean checkNoCompletion(@Nullable Styles styles, @NonNull CharPosition pos) {
-        var line = pos.line;
-        var column = pos.column;
+        int line = pos.line;
+        int column = pos.column;
         Spans spans;
         // Do not make completion without styles. The language may be empty or busy analyzing spans
         if (styles == null || (spans = styles.spans) == null) {
             return true;
         }
-        var reader = spans.read();
+        Spans.Reader reader = spans.read();
         try {
             reader.moveToLine(line);
             int index = reader.getSpanCount() - 1;

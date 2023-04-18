@@ -34,6 +34,8 @@ import android.text.TextPaint;
 
 import androidx.annotation.NonNull;
 
+import java.lang.reflect.Field;
+
 /**
  * Helper class for indirectly calling Paint#getTextRunCursor(), which is
  * responsible for cursor controlling.
@@ -58,7 +60,7 @@ public class TextLayoutHelper {
                     Layout.Alignment.ALIGN_NORMAL, 0, 0, true);
             try {
                 @SuppressLint({"DiscouragedPrivateApi", "SoonBlockedPrivateApi"})
-                var field = Layout.class.getDeclaredField("mTextDir");
+                Field field = Layout.class.getDeclaredField("mTextDir");
                 field.setAccessible(true);
                 field.set(layout, TextDirectionHeuristics.LTR);
             } catch (Exception e) {
@@ -78,7 +80,7 @@ public class TextLayoutHelper {
      * Get TextLayoutHelper for current thread
      */
     public static TextLayoutHelper get() {
-        var v = sLocal.get();
+        TextLayoutHelper v = sLocal.get();
         if (v == null) {
             v = new TextLayoutHelper();
             sLocal.set(v);

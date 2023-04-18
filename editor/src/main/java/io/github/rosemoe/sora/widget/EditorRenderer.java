@@ -40,6 +40,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.MutableInt;
 import android.util.SparseArray;
+import android.widget.EdgeEffect;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,8 +58,11 @@ import io.github.rosemoe.sora.graphics.GraphicTextRow;
 import io.github.rosemoe.sora.graphics.GraphicsConstants;
 import io.github.rosemoe.sora.graphics.Paint;
 import io.github.rosemoe.sora.lang.analysis.StyleUpdateRange;
+import io.github.rosemoe.sora.lang.brackets.PairedBracket;
+import io.github.rosemoe.sora.lang.completion.snippet.PlaceholderItem;
 import io.github.rosemoe.sora.lang.completion.snippet.SnippetItem;
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticRegion;
+import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer;
 import io.github.rosemoe.sora.lang.styling.AdvancedSpan;
 import io.github.rosemoe.sora.lang.styling.CodeBlock;
 import io.github.rosemoe.sora.lang.styling.EmptyReader;
@@ -72,6 +76,7 @@ import io.github.rosemoe.sora.lang.styling.line.LineAnchorStyle;
 import io.github.rosemoe.sora.lang.styling.line.LineBackground;
 import io.github.rosemoe.sora.lang.styling.line.LineSideIcon;
 import io.github.rosemoe.sora.lang.styling.line.LineStyles;
+import io.github.rosemoe.sora.text.CachedIndexer;
 import io.github.rosemoe.sora.text.CharPosition;
 import io.github.rosemoe.sora.text.Content;
 import io.github.rosemoe.sora.text.ContentLine;
@@ -83,10 +88,12 @@ import io.github.rosemoe.sora.util.IntPair;
 import io.github.rosemoe.sora.util.LongArrayList;
 import io.github.rosemoe.sora.util.Numbers;
 import io.github.rosemoe.sora.util.TemporaryCharBuffer;
+import io.github.rosemoe.sora.widget.layout.Layout;
 import io.github.rosemoe.sora.widget.layout.Row;
 import io.github.rosemoe.sora.widget.layout.RowIterator;
 import io.github.rosemoe.sora.widget.layout.WordwrapLayout;
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme;
+import io.github.rosemoe.sora.widget.snippet.SnippetController;
 import io.github.rosemoe.sora.widget.style.DiagnosticIndicatorStyle;
 import io.github.rosemoe.sora.widget.style.LineInfoPanelPosition;
 import io.github.rosemoe.sora.widget.style.LineInfoPanelPositionMode;
@@ -341,7 +348,7 @@ public class EditorRenderer {
         if (!renderingFlag) {
             return getLineDirect(line);
         }
-        var line2 = preloadedLines.get(line);
+        ContentLine line2 = preloadedLines.get(line);
         if (line2 == null) {
             line2 = content.getLine(line);
             preloadedLines.put(line, line2);
@@ -353,7 +360,7 @@ public class EditorRenderer {
         if (!renderingFlag) {
             return content.getLineDirections(line);
         }
-        var line2 = preloadedDirections.get(line);
+        Directions line2 = preloadedDirections.get(line);
         if (line2 == null) {
             line2 = content.getLineDirections(line);
             preloadedDirections.put(line, line2);
@@ -482,7 +489,7 @@ public class EditorRenderer {
 
             // Draw strikethrough
             if (TextStyle.isStrikeThrough(span.style)) {
-                var strikethroughColor = editor.getColorScheme().getColor(EditorColorScheme.STRIKETHROUGH);
+                int strikethroughColor = editor.getColorScheme().getColor(EditorColorScheme.STRIKETHROUGH);
                 paintOther.setColor(strikethroughColor == 0 ? paintGeneral.getColor() : strikethroughColor);
                 canvas.drawLine(paintingOffset, editor.getRowTop(row) + editor.getRowHeight() / 2f, paintingOffset + width, editor.getRowTop(row) + editor.getRowHeight() / 2f, paintOther);
             }
@@ -536,7 +543,7 @@ public class EditorRenderer {
         Styles styles;
         if ((styles = editor.getStyles()) != null) {
             if (styles.styleTypeCount != null) {
-                var count = styles.styleTypeCount.get(LineSideIcon.class);
+                io.github.rosemoe.sora.util.MutableInt count = styles.styleTypeCount.get(LineSideIcon.class);
                 if (count == null) {
                     return false;
                 }
@@ -558,11 +565,11 @@ public class EditorRenderer {
         drawColor(canvas, color.getColor(EditorColorScheme.WHOLE_BACKGROUND), viewRect);
 
         float lineNumberWidth = editor.measureLineNumber(); // include line number margin
-        var sideIconWidth = hasSideHintIcons() ? editor.getRowHeight() : 0f;
+        float sideIconWidth = hasSideHintIcons() ? editor.getRowHeight() : 0f;
         float offsetX = -editor.getOffsetX() + editor.measureTextRegionOffset();
         float textOffset = offsetX;
 
-        var gutterWidth = (int) (lineNumberWidth + sideIconWidth + editor.getDividerWidth() + editor.getDividerMarginLeft() + editor.getDividerMarginRight());
+        int gutterWidth = (int) (lineNumberWidth + sideIconWidth + editor.getDividerWidth() + editor.getDividerMarginLeft() + editor.getDividerMarginRight());
         if (editor.isWordwrap()) {
             if (cachedGutterWidth == 0) {
                 cachedGutterWidth = gutterWidth;
@@ -594,9 +601,9 @@ public class EditorRenderer {
 
         boolean lineNumberNotPinned = editor.isLineNumberEnabled() && (editor.isWordwrap() || !editor.isLineNumberPinned());
 
-        var postDrawLineNumbers = this.postDrawLineNumbers;
+        LongArrayList postDrawLineNumbers = this.postDrawLineNumbers;
         postDrawLineNumbers.clear();
-        var postDrawCurrentLines = this.postDrawCurrentLines;
+        LongArrayList postDrawCurrentLines = this.postDrawCurrentLines;
         postDrawCurrentLines.clear();
         List<DrawCursorTask> postDrawCursor = new ArrayList<>(3);
         MutableInt firstLn = editor.isFirstLineNumberAlwaysVisible() && editor.isWordwrap() ? new MutableInt(-1) : null;
@@ -637,7 +644,7 @@ public class EditorRenderer {
                 }
                 paintOther.setTextAlign(editor.getLineNumberAlign());
                 paintOther.setColor(firstLn.value == currentLineNumber ? color.getColor(EditorColorScheme.LINE_NUMBER_CURRENT) : lineNumberColor);
-                var text = Integer.toString(firstLn.value + 1);
+                String text = Integer.toString(firstLn.value + 1);
                 switch (editor.getLineNumberAlign()) {
                     case LEFT:
                         canvas.drawText(text, offsetX, y, paintOther);
@@ -664,7 +671,7 @@ public class EditorRenderer {
         }
 
         if (!editor.getCursorAnimator().isRunning()) {
-            for (var action : postDrawCursor) {
+            for (DrawCursorTask action : postDrawCursor) {
                 action.execute(canvas);
             }
         } else {
@@ -716,18 +723,18 @@ public class EditorRenderer {
         if (!hasSideHintIcons()) {
             return;
         }
-        var row = editor.getFirstVisibleRow();
-        var itr = editor.getLayout().obtainRowIterator(row);
-        final var iconSizeFactor = editor.getProps().sideIconSizeFactor;
-        var size = (int) (editor.getRowHeight() * iconSizeFactor);
-        var offsetToLeftTop = (int) (editor.getRowHeight() * (1 - iconSizeFactor) / 2f);
+        int row = editor.getFirstVisibleRow();
+        RowIterator itr = editor.getLayout().obtainRowIterator(row);
+        final float iconSizeFactor = editor.getProps().sideIconSizeFactor;
+        int size = (int) (editor.getRowHeight() * iconSizeFactor);
+        int offsetToLeftTop = (int) (editor.getRowHeight() * (1 - iconSizeFactor) / 2f);
         while (row <= editor.getLastVisibleRow() && itr.hasNext()) {
-            var rowInf = itr.next();
+            Row rowInf = itr.next();
             if (rowInf.isLeadingRow) {
-                var hint = getLineStyle(rowInf.lineIndex, LineSideIcon.class);
+                LineSideIcon hint = getLineStyle(rowInf.lineIndex, LineSideIcon.class);
                 if (hint != null) {
-                    var drawable = hint.getDrawable();
-                    var rect = new Rect(0, 0, size, size);
+                    Drawable drawable = hint.getDrawable();
+                    Rect rect = new Rect(0, 0, size, size);
                     rect.offsetTo((int) offset + offsetToLeftTop, editor.getRowTop(row) - editor.getOffsetY() + offsetToLeftTop);
                     drawable.setBounds(rect);
                     drawable.draw(canvas);
@@ -825,7 +832,7 @@ public class EditorRenderer {
         // Line number center align to text center
         float y = (editor.getRowBottom(row) + editor.getRowTop(row)) / 2f - (metricsLineNumber.descent - metricsLineNumber.ascent) / 2f - metricsLineNumber.ascent - editor.getOffsetY();
 
-        var buffer = TemporaryCharBuffer.obtain(20);
+        char[] buffer = TemporaryCharBuffer.obtain(20);
         line++;
         int i = stringSize(line);
         Numbers.getChars(line, i, buffer);
@@ -927,7 +934,7 @@ public class EditorRenderer {
             return null;
         }
         coordinateLine.setLine(line);
-        var index = Collections.binarySearch(lineStylesList, coordinateLine);
+        int index = Collections.binarySearch(lineStylesList, coordinateLine);
         if (index >= 0 && index < lineStylesList.size()) {
             return lineStylesList.get(index);
         }
@@ -936,7 +943,7 @@ public class EditorRenderer {
 
     @Nullable
     protected <T extends LineAnchorStyle> T getLineStyle(int line, Class<T> type) {
-        var lineStyles = getLineStyles(line);
+        LineStyles lineStyles = getLineStyles(line);
         if (lineStyles != null) {
             return lineStyles.findOne(type);
         }
@@ -945,7 +952,7 @@ public class EditorRenderer {
 
     @Nullable
     protected ResolvableColor getUserBackgroundForLine(int line) {
-        var bg = getLineStyle(line, LineBackground.class);
+        LineBackground bg = getLineStyle(line, LineBackground.class);
         if (bg != null) {
             return bg.getColor();
         }
@@ -964,7 +971,7 @@ public class EditorRenderer {
         int firstVis = editor.getFirstVisibleRow();
         RowIterator rowIterator = editor.getLayout().obtainRowIterator(firstVis, preloadedLines);
         Spans spans = editor.getStyles() == null ? null : editor.getStyles().spans;
-        var matchedPositions = this.matchedPositions;
+        LongArrayList matchedPositions = this.matchedPositions;
         matchedPositions.clear();
         int currentLine = cursor.isSelected() ? -1 : cursor.getLeftLine();
         int currentLineBgColor = editor.getColorScheme().getColor(EditorColorScheme.CURRENT_LINE);
@@ -973,8 +980,8 @@ public class EditorRenderer {
         int leadingWhitespaceEnd = 0;
         int trailingWhitespaceStart = 0;
         float circleRadius = 0f;
-        var composingPosition = editor.inputConnection.composingText.isComposing() && editor.inputConnection.composingText.startIndex >= 0 && editor.inputConnection.composingText.startIndex < content.length() ? content.getIndexer().getCharPosition(editor.inputConnection.composingText.startIndex) : null;
-        var composingLength = editor.inputConnection.composingText.endIndex - editor.inputConnection.composingText.startIndex;
+        CharPosition composingPosition = editor.inputConnection.composingText.isComposing() && editor.inputConnection.composingText.startIndex >= 0 && editor.inputConnection.composingText.startIndex < content.length() ? content.getIndexer().getCharPosition(editor.inputConnection.composingText.startIndex) : null;
+        int composingLength = editor.inputConnection.composingText.endIndex - editor.inputConnection.composingText.startIndex;
         if (editor.shouldInitializeNonPrintable()) {
             float spaceWidth = paintGeneral.getSpaceWidth();
             circleRadius = Math.min(editor.getRowHeight(), spaceWidth) * 0.125f;
@@ -1009,12 +1016,12 @@ public class EditorRenderer {
             float[] charPos = findDesiredVisibleChar(offset3, line, rowInf.startColumn, rowInf.endColumn);
             float paintingOffset = charPos[1] - offset2;
 
-            var drawCurrentLineBg = line == currentLine && !editor.getCursorAnimator().isRunning() && editor.isEditable();
+            boolean drawCurrentLineBg = line == currentLine && !editor.getCursorAnimator().isRunning() && editor.isEditable();
             if (!drawCurrentLineBg || editor.getProps().drawCustomLineBgOnCurrentLine) {
                 // Draw custom background
-                var customBackground = getUserBackgroundForLine(line);
+                ResolvableColor customBackground = getUserBackgroundForLine(line);
                 if (customBackground != null) {
-                    var color = customBackground.resolve(editor);
+                    int color = customBackground.resolve(editor);
                     drawRowBackground(canvas, color, row);
                 }
             }
@@ -1027,9 +1034,9 @@ public class EditorRenderer {
             // Draw matched text background
             if (matchedPositions.size() > 0) {
                 for (int i = 0; i < matchedPositions.size(); i++) {
-                    var position = matchedPositions.get(i);
-                    var start = IntPair.getFirst(position);
-                    var end = IntPair.getSecond(position);
+                    long position = matchedPositions.get(i);
+                    int start = IntPair.getFirst(position);
+                    int end = IntPair.getSecond(position);
                     drawRowRegionBackground(canvas, row, line, start, end, rowInf.startColumn, rowInf.endColumn, editor.getColorScheme().getColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND));
                 }
             }
@@ -1195,7 +1202,7 @@ public class EditorRenderer {
 
                     // Draw strikethrough
                     if (TextStyle.isStrikeThrough(styleBits)) {
-                        var strikethroughColor = editor.getColorScheme().getColor(EditorColorScheme.STRIKETHROUGH);
+                        int strikethroughColor = editor.getColorScheme().getColor(EditorColorScheme.STRIKETHROUGH);
                         paintOther.setColor(strikethroughColor == 0 ? paintGeneral.getColor() : strikethroughColor);
                         canvas.drawLine(paintingOffset, editor.getRowTop(row) + editor.getRowHeight() / 2f - editor.getOffsetY(), paintingOffset + width, editor.getRowTop(row) + editor.getRowHeight() / 2f - editor.getOffsetY(), paintOther);
                     }
@@ -1299,17 +1306,17 @@ public class EditorRenderer {
                 }
             }
 
-            final var layout = editor.getLayout();
+            final Layout layout = editor.getLayout();
             // Draw cursors
             if (cursor.isSelected()) {
                 if (cursor.getLeftLine() == line && isInside(cursor.getLeftColumn(), rowInf.startColumn, rowInf.endColumn, line)) {
                     float centerX = editor.measureTextRegionOffset() + layout.getCharLayoutOffset(cursor.getLeftLine(), cursor.getLeftColumn())[1] - editor.getOffsetX();
-                    var type = content.isRtlAt(cursor.getLeftLine(), cursor.getLeftColumn()) ? SelectionHandleStyle.HANDLE_TYPE_RIGHT : SelectionHandleStyle.HANDLE_TYPE_LEFT;
+                    int type = content.isRtlAt(cursor.getLeftLine(), cursor.getLeftColumn()) ? SelectionHandleStyle.HANDLE_TYPE_RIGHT : SelectionHandleStyle.HANDLE_TYPE_LEFT;
                     postDrawCursor.add(new DrawCursorTask(centerX, getRowBottomForBackground(row) - editor.getOffsetY(), type, editor.getLeftHandleDescriptor()));
                 }
                 if (cursor.getRightLine() == line && isInside(cursor.getRightColumn(), rowInf.startColumn, rowInf.endColumn, line)) {
                     float centerX = editor.measureTextRegionOffset() + layout.getCharLayoutOffset(cursor.getRightLine(), cursor.getRightColumn())[1] - editor.getOffsetX();
-                    var type = content.isRtlAt(cursor.getRightLine(), cursor.getRightColumn()) ? SelectionHandleStyle.HANDLE_TYPE_LEFT : SelectionHandleStyle.HANDLE_TYPE_RIGHT;
+                    int type = content.isRtlAt(cursor.getRightLine(), cursor.getRightColumn()) ? SelectionHandleStyle.HANDLE_TYPE_LEFT : SelectionHandleStyle.HANDLE_TYPE_RIGHT;
                     postDrawCursor.add(new DrawCursorTask(centerX, getRowBottomForBackground(row) - editor.getOffsetY(), type, editor.getRightHandleDescriptor()));
                 }
             } else if (cursor.getLeftLine() == line && isInside(cursor.getLeftColumn(), rowInf.startColumn, rowInf.endColumn, line)) {
@@ -1334,15 +1341,15 @@ public class EditorRenderer {
     }
 
     protected void drawDiagnosticIndicators(Canvas canvas, float offset) {
-        var diagnosticsContainer = editor.getDiagnostics();
-        var style = editor.getDiagnosticIndicatorStyle();
+        DiagnosticsContainer diagnosticsContainer = editor.getDiagnostics();
+        DiagnosticIndicatorStyle style = editor.getDiagnosticIndicatorStyle();
         if (diagnosticsContainer != null && style != DiagnosticIndicatorStyle.NONE && style != null) {
-            var text = content;
-            var firstVisRow = editor.getFirstVisibleRow();
-            var lastVisRow = editor.getLastVisibleRow();
-            var firstIndex = text.getCharIndex(editor.getFirstVisibleLine(), 0);
-            var lastLine = Math.min(text.getLineCount() - 1, editor.getLastVisibleLine() + 1);
-            var lastIndex = text.getCharIndex(lastLine, 0) + text.getColumnCount(lastLine);
+            Content text = content;
+            int firstVisRow = editor.getFirstVisibleRow();
+            int lastVisRow = editor.getLastVisibleRow();
+            int firstIndex = text.getCharIndex(editor.getFirstVisibleLine(), 0);
+            int lastLine = Math.min(text.getLineCount() - 1, editor.getLastVisibleLine() + 1);
+            int lastIndex = text.getCharIndex(lastLine, 0) + text.getColumnCount(lastLine);
             diagnosticsContainer.queryInRegion(collectedDiagnostics, firstIndex, lastIndex);
             if (collectedDiagnostics.isEmpty()) {
                 return;
@@ -1350,18 +1357,18 @@ public class EditorRenderer {
             final float waveLength = editor.getDpUnit() * editor.getProps().indicatorWaveLength;
             final float amplitude = editor.getDpUnit() * editor.getProps().indicatorWaveAmplitude;
             final float waveWidth = editor.getDpUnit() * editor.getProps().indicatorWaveWidth;
-            var start = new CharPosition();
-            var end = new CharPosition();
-            var indexer = cursor.getIndexer();
-            for (var region : collectedDiagnostics) {
-                var startIndex = Math.max(firstIndex, region.startIndex);
-                var endIndex = Math.min(lastIndex, region.endIndex);
+            CharPosition start = new CharPosition();
+            CharPosition end = new CharPosition();
+            CachedIndexer indexer = cursor.getIndexer();
+            for (DiagnosticRegion region : collectedDiagnostics) {
+                int startIndex = Math.max(firstIndex, region.startIndex);
+                int endIndex = Math.min(lastIndex, region.endIndex);
                 indexer.getCharPosition(startIndex, start);
                 indexer.getCharPosition(endIndex, end);
-                var startRow = editor.getLayout().getRowIndexForPosition(startIndex);
-                var endRow = editor.getLayout().getRowIndexForPosition(endIndex);
+                int startRow = editor.getLayout().getRowIndexForPosition(startIndex);
+                int endRow = editor.getLayout().getRowIndexForPosition(endIndex);
                 // Setup color
-                var colorId = (region.severity >= 0 && region.severity <= 3) ? sDiagnosticsColorMapping[region.severity] : 0;
+                int colorId = (region.severity >= 0 && region.severity <= 3) ? sDiagnosticsColorMapping[region.severity] : 0;
                 if (colorId == 0) {
                     break;
                 }
@@ -1369,8 +1376,8 @@ public class EditorRenderer {
                 startRow = Math.max(firstVisRow, startRow);
                 endRow = Math.min(lastVisRow, endRow);
                 for (int i = startRow; i <= endRow; i++) {
-                    var row = editor.getLayout().getRowAt(i);
-                    var startX = 0f;
+                    Row row = editor.getLayout().getRowAt(i);
+                    float startX = 0f;
                     if (i == startRow) {
                         startX = measureText(getLine(row.lineIndex), row.lineIndex, row.startColumn, Math.max(start.column - row.startColumn, 0));
                     }
@@ -1391,9 +1398,9 @@ public class EditorRenderer {
                         float centerY = editor.getRowBottom(i) - editor.getOffsetY();
                         switch (style) {
                             case WAVY_LINE: {
-                                var lineWidth = 0 - startX;
-                                var waveCount = (int) Math.ceil(lineWidth / waveLength);
-                                var phi = lineWidth < 0 ? 0f : (waveLength * waveCount - lineWidth);
+                                float lineWidth = 0 - startX;
+                                int waveCount = (int) Math.ceil(lineWidth / waveLength);
+                                float phi = lineWidth < 0 ? 0f : (waveLength * waveCount - lineWidth);
                                 lineWidth = endX - startX;
                                 canvas.save();
                                 canvas.clipRect(startX, 0, endX, canvas.getHeight());
@@ -1444,8 +1451,8 @@ public class EditorRenderer {
             float spaceWidth = paintGeneral.getSpaceWidth();
             float rowCenter = (editor.getRowTop(row) + editor.getRowBottom(row)) / 2f - editor.getOffsetY();
             offset += measureText(lineBuf, line, rowStart, paintStart - rowStart);
-            var chars = lineBuf.value;
-            var lastPos = paintStart;
+            char[] chars = lineBuf.value;
+            int lastPos = paintStart;
             while (paintStart < paintEnd) {
                 char ch = chars[paintStart];
                 int paintCount = 0;
@@ -1469,7 +1476,7 @@ public class EditorRenderer {
                     bufferedDrawPoints.drawPoint(centerOffset, rowCenter);
                 }
                 if (paintLine) {
-                    var charWidth = editor.getTabWidth() * spaceWidth;
+                    float charWidth = editor.getTabWidth() * spaceWidth;
                     float delta = charWidth * 0.05f;
                     canvas.drawLine(offset + delta, rowCenter, offset + charWidth - delta, rowCenter, paintOther);
                 }
@@ -1524,9 +1531,9 @@ public class EditorRenderer {
         if (highlightStart < highlightEnd) {
             tmpRect.top = getRowTopForBackground(row) - editor.getOffsetY();
             tmpRect.bottom = getRowBottomForBackground(row) - editor.getOffsetY();
-            var dirs = getLineDirections(line);
-            var lineObj = getLine(line);
-            var empty = true;
+            Directions dirs = getLineDirections(line);
+            ContentLine lineObj = getLine(line);
+            boolean empty = true;
             paintGeneral.setColor(color);
             float paintingOffset = editor.measureTextRegionOffset() - editor.getOffsetX();
             for (int i = 0; i < dirs.getRunCount(); i++) {
@@ -1535,14 +1542,14 @@ public class EditorRenderer {
                 if (dirs.getRunStart(i) >= highlightEnd) {
                     break;
                 }
-                var measureStart = Math.max(rowStart, dirs.getRunStart(i));
-                var measureEnd = Math.min(rowEnd, dirs.getRunEnd(i));
-                var runWidth = measureEnd <= measureStart ? 0f : measureText(lineObj, line, measureStart, measureEnd - measureStart);
+                int measureStart = Math.max(rowStart, dirs.getRunStart(i));
+                int measureEnd = Math.min(rowEnd, dirs.getRunEnd(i));
+                float runWidth = measureEnd <= measureStart ? 0f : measureText(lineObj, line, measureStart, measureEnd - measureStart);
                 if (sharedStart >= sharedEnd) {
                     paintingOffset += runWidth;
                     continue;
                 }
-                var rtl = dirs.isRunRtl(i);
+                boolean rtl = dirs.isRunRtl(i);
                 float left, right;
                 if (rtl) {
                     left = paintingOffset + runWidth - measureText(lineObj, line, measureStart, sharedStart - measureStart);
@@ -1552,7 +1559,7 @@ public class EditorRenderer {
                     right = paintingOffset + measureText(lineObj, line, measureStart, sharedEnd - measureStart);
                 }
                 if (left > right) {
-                    var tmp = left;
+                    float tmp = left;
                     left = right;
                     right = tmp;
                 }
@@ -1658,8 +1665,8 @@ public class EditorRenderer {
     }
 
     protected void drawRegionTextDirectional(Canvas canvas, float offsetX, float baseline, int line, int startIndex, int endIndex, int contextStart, int contextEnd, int columnCount, int color) {
-        var directions = getLineDirections(line);
-        var width = 0f;
+        Directions directions = getLineDirections(line);
+        float width = 0f;
         for (int i = 0; i < directions.getRunCount(); i++) {
             int sharedStart = Math.max(directions.getRunStart(i), startIndex);
             int sharedEnd = Math.min(directions.getRunEnd(i), endIndex);
@@ -1709,9 +1716,9 @@ public class EditorRenderer {
     protected void drawText(Canvas canvas, ContentLine line, int index, int count, int contextStart, int contextCount, boolean isRtl, float offX, float offY, int lineNumber) {
         int end = index + count;
         end = Math.min(line.value.length, end);
-        var src = line.value;
+        char[] src = line.value;
         int st = index;
-        var renderFuncChars = editor.isRenderFunctionCharacters();
+        boolean renderFuncChars = editor.isRenderFunctionCharacters();
         for (int i = index; i < end; i++) {
             if (src[i] == '\t') {
                 drawTextRunDirect(canvas, src, st, i - st, contextStart, contextCount, offX, offY, isRtl);
@@ -1780,8 +1787,8 @@ public class EditorRenderer {
      */
     protected void drawEdgeEffect(Canvas canvas) {
         boolean postDraw = false;
-        var verticalEdgeEffect = editor.getVerticalEdgeEffect();
-        var horizontalEdgeEffect = editor.getHorizontalEdgeEffect();
+        EdgeEffect verticalEdgeEffect = editor.getVerticalEdgeEffect();
+        EdgeEffect horizontalEdgeEffect = editor.getHorizontalEdgeEffect();
         if (!verticalEdgeEffect.isFinished()) {
             boolean bottom = editor.getEventHandler().glowTopOrBottom;
             if (bottom) {
@@ -1810,7 +1817,7 @@ public class EditorRenderer {
             postDraw = horizontalEdgeEffect.draw(canvas) || postDraw;
             canvas.restore();
         }
-        var scroller = editor.getScroller();
+        EditorScroller scroller = editor.getScroller();
         if (scroller.isOverScrolled()) {
             if (verticalEdgeEffect.isFinished() && (scroller.getCurrY() < 0 || scroller.getCurrY() > editor.getScrollMaxY())) {
                 editor.getEventHandler().glowTopOrBottom = scroller.getCurrY() >= editor.getScrollMaxY();
@@ -1835,9 +1842,9 @@ public class EditorRenderer {
      * @param offsetX The start x offset for text
      */
     protected void drawBlockLines(Canvas canvas, float offsetX) {
-        final var styles = editor.getStyles();
+        final Styles styles = editor.getStyles();
         List<CodeBlock> blocks = styles == null ? null : styles.blocks;
-        var indentMode = styles != null && styles.isIndentCountMode();
+        boolean indentMode = styles != null && styles.isIndentCountMode();
         if (blocks == null || blocks.isEmpty()) {
             return;
         }
@@ -1855,7 +1862,7 @@ public class EditorRenderer {
             }
             if (CodeEditor.hasVisibleRegion(block.startLine, block.endLine, first, last)) {
                 try {
-                    var lineContent = getLine(block.endLine);
+                    ContentLine lineContent = getLine(block.endLine);
                     float offsetEnd = indentMode ? paintGeneral.getSpaceWidth() * block.endColumn : measureText(lineContent, block.endLine, 0, Math.min(block.endColumn, lineContent.length()));
                     lineContent = getLine(block.startLine);
                     float offsetStart = indentMode ? paintGeneral.getSpaceWidth() * block.startColumn : measureText(lineContent, block.startLine, 0, Math.min(block.startColumn, lineContent.length()));
@@ -1886,10 +1893,10 @@ public class EditorRenderer {
         if (blocks == null || blocks.isEmpty()) {
             return;
         }
-        var current = editor.getCurrentCursorBlock();
+        int current = editor.getCurrentCursorBlock();
         if (current >= 0 && current < blocks.size()) {
-            var block = blocks.get(current);
-            var layout = editor.getLayout();
+            CodeBlock block = blocks.get(current);
+            Layout layout = editor.getLayout();
             try {
                 float top = layout.getCharLayoutOffset(block.startLine, block.startColumn)[0] - editor.getRowHeight() - editor.getOffsetY();
                 float bottom = layout.getCharLayoutOffset(block.endLine, block.endColumn)[0] - editor.getOffsetY();
@@ -1916,7 +1923,7 @@ public class EditorRenderer {
         if (!editor.getEventHandler().shouldDrawScrollBar()) {
             return;
         }
-        var size = editor.getDpUnit() * 10;
+        float size = editor.getDpUnit() * 10;
         if (editor.isHorizontalScrollBarEnabled() && !editor.isWordwrap() && editor.getScrollMaxX() > editor.getWidth() * 3 / 4) {
             canvas.save();
             canvas.translate(0f, size * editor.getEventHandler().getScrollBarMovementPercentage());
@@ -2107,9 +2114,9 @@ public class EditorRenderer {
     }
 
     protected void patchSnippetRegions(Canvas canvas, float textOffset) {
-        var controller = editor.getSnippetController();
+        SnippetController controller = editor.getSnippetController();
         if (controller.isInSnippet()) {
-            var editing = controller.getEditingTabStop();
+            PlaceholderItem editing = controller.getEditingTabStop();
             if (editing != null) {
                 Log.d(LOG_TAG, "Patch editing");
                 patchTextRegionWithColor(canvas, textOffset, editing.getStartIndex(), editing.getEndIndex(), 0, editor.getColorScheme().getColor(EditorColorScheme.SNIPPET_BACKGROUND_EDITING), 0);
@@ -2127,11 +2134,11 @@ public class EditorRenderer {
         if (editor.inputConnection.composingText.isComposing() || !editor.getProps().highlightMatchingDelimiters || editor.getCursor().isSelected()) {
             return;
         }
-        var paired = editor.styleDelegate.getFoundBracketPair();
+        PairedBracket paired = editor.styleDelegate.getFoundBracketPair();
         if (paired != null) {
-            var color = editor.getColorScheme().getColor(EditorColorScheme.HIGHLIGHTED_DELIMITERS_FOREGROUND);
-            var backgroundColor = editor.getColorScheme().getColor(EditorColorScheme.HIGHLIGHTED_DELIMITERS_BACKGROUND);
-            var underlineColor = editor.getColorScheme().getColor(EditorColorScheme.HIGHLIGHTED_DELIMITERS_UNDERLINE);
+            int color = editor.getColorScheme().getColor(EditorColorScheme.HIGHLIGHTED_DELIMITERS_FOREGROUND);
+            int backgroundColor = editor.getColorScheme().getColor(EditorColorScheme.HIGHLIGHTED_DELIMITERS_BACKGROUND);
+            int underlineColor = editor.getColorScheme().getColor(EditorColorScheme.HIGHLIGHTED_DELIMITERS_UNDERLINE);
             if (isInvalidTextBounds(paired.leftIndex, paired.leftLength) || isInvalidTextBounds(paired.rightIndex, paired.rightLength)) {
                 // Index out of bounds
                 return;
@@ -2151,7 +2158,7 @@ public class EditorRenderer {
         paintOther.setStrokeWidth(editor.getRowHeightOfText() * 0.1f);
         paintGeneral.setStyle(android.graphics.Paint.Style.FILL_AND_STROKE);
         paintGeneral.setFakeBoldText(editor.getProps().boldMatchingDelimiters);
-        var positions = getTextRegionPositions(start, end);
+        List<TextDisplayPosition> positions = getTextRegionPositions(start, end);
         Log.d(LOG_TAG, "positions = " + positions);
         patchTextRegions(canvas, textOffset, positions, (canvasLocal, horizontalOffset, row, line, startCol, endCol, style) -> {
             if (backgroundColor != 0) {
@@ -2173,7 +2180,7 @@ public class EditorRenderer {
             }
             if (underlineColor != 0) {
                 paintOther.setColor(underlineColor);
-                var bottom = editor.getRowBottomOfText(row) - editor.getOffsetY() - editor.getRowHeightOfText() * 0.05f;
+                float bottom = editor.getRowBottomOfText(row) - editor.getOffsetY() - editor.getRowHeightOfText() * 0.05f;
                 canvas.drawLine(0, bottom, editor.getWidth(), bottom, paintOther);
             }
         });
@@ -2184,21 +2191,21 @@ public class EditorRenderer {
     }
 
     protected List<TextDisplayPosition> getTextRegionPositions(int start, int end) {
-        var layout = editor.getLayout();
-        var startRow = layout.getRowIndexForPosition(start);
-        var endRow = layout.getRowIndexForPosition(end);
-        var posStart = cursor.getIndexer().getCharPosition(start);
-        var posEnd = cursor.getIndexer().getCharPosition(end);
-        var itr = layout.obtainRowIterator(startRow, preloadedLines);
-        var list = new ArrayList<TextDisplayPosition>();
+        Layout layout = editor.getLayout();
+        int startRow = layout.getRowIndexForPosition(start);
+        int endRow = layout.getRowIndexForPosition(end);
+        CharPosition posStart = cursor.getIndexer().getCharPosition(start);
+        CharPosition posEnd = cursor.getIndexer().getCharPosition(end);
+        RowIterator itr = layout.obtainRowIterator(startRow, preloadedLines);
+        ArrayList<TextDisplayPosition> list = new ArrayList<TextDisplayPosition>();
         for (int i = startRow; i <= endRow && itr.hasNext(); i++) {
-            var row = itr.next();
-            var startOnRow = (i == startRow ? posStart.column : row.startColumn);
-            var endOnRow = (i == endRow ? posEnd.column : row.endColumn);
-            var position = new TextDisplayPosition();
+            Row row = itr.next();
+            int startOnRow = (i == startRow ? posStart.column : row.startColumn);
+            int endOnRow = (i == endRow ? posEnd.column : row.endColumn);
+            TextDisplayPosition position = new TextDisplayPosition();
             list.add(position);
             position.row = i;
-            var line = content.getLine(row.lineIndex);
+            ContentLine line = content.getLine(row.lineIndex);
             position.left = measureText(line, row.lineIndex, row.startColumn, startOnRow - row.startColumn);
             position.right = position.left + measureText(line, row.lineIndex, startOnRow, endOnRow - startOnRow);
             position.startColumn = startOnRow;
@@ -2210,29 +2217,29 @@ public class EditorRenderer {
     }
 
     protected void patchTextRegions(Canvas canvas, float textOffset, List<TextDisplayPosition> positions, @NonNull PatchDraw patch) {
-        var styles = editor.getStyles();
-        var spans = styles != null ? styles.getSpans() : null;
-        var reader = spans != null ? spans.read() : new EmptyReader();
-        var firstVisRow = editor.getFirstVisibleRow();
-        var lastVisRow = editor.getLastVisibleRow();
-        for (var position : positions) {
+        Styles styles = editor.getStyles();
+        Spans spans = styles != null ? styles.getSpans() : null;
+        Spans.Reader reader = spans != null ? spans.read() : new EmptyReader();
+        int firstVisRow = editor.getFirstVisibleRow();
+        int lastVisRow = editor.getLastVisibleRow();
+        for (TextDisplayPosition position : positions) {
             if (!(firstVisRow <= position.row && position.row <= lastVisRow)) {
                 continue;
             }
             // First, get the line
-            var line = position.line;
+            int line = position.line;
             try {
                 reader.moveToLine(line);
             } catch (Exception e) {
                 Log.e(LOG_TAG, "patchTextRegions: Unable to get spans", e);
                 break;
             }
-            var startCol = position.startColumn;
-            var endCol = position.endColumn;
-            var lineText = getLine(line);
-            var column = lineText.length();
+            int startCol = position.startColumn;
+            int endCol = position.endColumn;
+            ContentLine lineText = getLine(line);
+            int column = lineText.length();
             canvas.save();
-            var horizontalOffset = textOffset;
+            float horizontalOffset = textOffset;
             boolean first = true;
             // Find spans to draw
             Span nextSpan = null;
@@ -2245,14 +2252,14 @@ public class EditorRenderer {
                     span = nextSpan;
                 }
                 nextSpan = i + 1 == spanCount ? null : reader.getSpanAt(i + 1);
-                var spanStart = Math.max(span.column, position.rowStart);
-                var sharedStart = Math.max(startCol, spanStart);
-                var spanEnd = nextSpan == null ? column : nextSpan.column;
+                int spanStart = Math.max(span.column, position.rowStart);
+                int sharedStart = Math.max(startCol, spanStart);
+                int spanEnd = nextSpan == null ? column : nextSpan.column;
                 spanEnd = Math.min(column, spanEnd); // Spans can be corrupted
                 if (spanEnd <= position.startColumn) {
                     continue;
                 }
-                var sharedEnd = Math.min(endCol, spanEnd);
+                int sharedEnd = Math.min(endCol, spanEnd);
                 if (sharedEnd - sharedStart > 0) {
                     // Clip canvas to patch the requested region
                     if (first) {
@@ -2260,8 +2267,8 @@ public class EditorRenderer {
                         first = false;
                     }
                     if (TextStyle.isItalics(span.getStyleBits())) {
-                        var path = new Path();
-                        var y = editor.getRowBottomOfText(position.row) - editor.getOffsetY();
+                        Path path = new Path();
+                        int y = editor.getRowBottomOfText(position.row) - editor.getOffsetY();
                         path.moveTo(textOffset + position.left, y);
                         path.lineTo(textOffset + position.left - GraphicsConstants.TEXT_SKEW_X * y, 0f);
                         path.lineTo(editor.getWidth(), 0f);
@@ -2273,8 +2280,8 @@ public class EditorRenderer {
                     }
 
                     if (TextStyle.isItalics(span.getStyleBits())) {
-                        var path = new Path();
-                        var y = editor.getRowBottomOfText(position.row) - editor.getOffsetY();
+                        Path path = new Path();
+                        int y = editor.getRowBottomOfText(position.row) - editor.getOffsetY();
                         path.moveTo(textOffset + position.right, y);
                         path.lineTo(textOffset + position.right - GraphicsConstants.TEXT_SKEW_X * y, 0f);
                         path.lineTo(0, 0f);
@@ -2358,22 +2365,22 @@ public class EditorRenderer {
         if (start >= end) {
             return new float[]{end, 0};
         }
-        var line = getLine(lineIndex);
+        ContentLine line = getLine(lineIndex);
         if (line.widthCache != null && line.timestamp < displayTimestamp) {
             buildMeasureCacheForLines(lineIndex, lineIndex, displayTimestamp, false);
         }
-        var gtr = GraphicTextRow.obtain(basicDisplayMode);
+        GraphicTextRow gtr = GraphicTextRow.obtain(basicDisplayMode);
         gtr.set(line, getLineDirections(lineIndex), contextStart, end, editor.getTabWidth(), line.widthCache == null ? editor.getSpansForLine(lineIndex) : null, paintGeneral);
         if (editor.getLayout() instanceof WordwrapLayout && line.widthCache == null) {
             gtr.setSoftBreaks(((WordwrapLayout) editor.getLayout()).getSoftBreaksForLine(lineIndex));
         }
-        var res = gtr.findOffsetByAdvance(start, target);
+        float[] res = gtr.findOffsetByAdvance(start, target);
 
         // Do some additional work here
 
-        var offset = (int) res[0];
+        int offset = (int) res[0];
         // Check RTL context
-        var rtl = false;
+        boolean rtl = false;
         int runIndex = -1;
         Directions dirs = null;
         if (line.mayNeedBidi()) {
@@ -2401,9 +2408,9 @@ public class EditorRenderer {
         } else {
             if (forLast) {
                 if (offset + 1 < end) {
-                    var itr = new UnicodeIterator(line, offset + 1, end);
+                    UnicodeIterator itr = new UnicodeIterator(line, offset + 1, end);
                     int codePoint;
-                    var first = true;
+                    boolean first = true;
                     while ((codePoint = itr.nextCodePoint()) != 0) {
                         if (isCombiningCharacter(codePoint) || first) {
                             offset = itr.getEndIndex();
@@ -2415,7 +2422,7 @@ public class EditorRenderer {
                 }
             } else {
                 if (offset < end) {
-                    var chars = line.getRawData();
+                    char[] chars = line.getRawData();
                     while (offset > start) {
                         char ch = chars[offset];
                         if (Character.isLowSurrogate(ch)) {
@@ -2439,7 +2446,7 @@ public class EditorRenderer {
         }
         if (!rtl && !forLast && offset > start) {
             // Try to combine one character again
-            var chars = line.getRawData();
+            char[] chars = line.getRawData();
             if (Character.isLowSurrogate(chars[offset - 1])) {
                 if (offset - 1 > start && !couldBeEmojiPart(Character.toCodePoint(chars[offset - 2], chars[offset - 1]))) {
                     offset -= 2;
@@ -2463,10 +2470,10 @@ public class EditorRenderer {
         if (start >= end) {
             return new float[]{end, 0};
         }
-        var gtr = GraphicTextRow.obtain(basicDisplayMode);
+        GraphicTextRow gtr = GraphicTextRow.obtain(basicDisplayMode);
         gtr.set(content, lineIndex, contextStart, end, editor.getTabWidth(), sSpansForWordwrap, paint);
         gtr.disableCache();
-        var res = gtr.findOffsetByAdvance(start, target);
+        float[] res = gtr.findOffsetByAdvance(start, target);
         gtr.recycle();
         return res;
     }
@@ -2475,21 +2482,21 @@ public class EditorRenderer {
      * Build measure cache for the given lines, if the timestamp indicates that it is outdated.
      */
     protected void buildMeasureCacheForLines(int startLine, int endLine, long timestamp, boolean useCachedContent) {
-        var text = content;
+        Content text = content;
         while (startLine <= endLine && startLine < text.getLineCount()) {
-            var line = useCachedContent ? getLine(startLine) : getLineDirect(startLine);
+            ContentLine line = useCachedContent ? getLine(startLine) : getLineDirect(startLine);
             if (line.timestamp < timestamp) {
-                var gtr = GraphicTextRow.obtain(basicDisplayMode);
-                var forced = false;
+                GraphicTextRow gtr = GraphicTextRow.obtain(basicDisplayMode);
+                boolean forced = false;
                 if (line.widthCache == null || line.widthCache.length < line.length()) {
                     line.widthCache = editor.obtainFloatArray(Math.max(line.length() + 8, 90), useCachedContent);
                     forced = true;
                 }
-                var spans = editor.getSpansForLine(startLine);
+                List<Span> spans = editor.getSpansForLine(startLine);
                 gtr.set(text, startLine, 0, line.length(), editor.getTabWidth(), spans, paintGeneral);
-                var softBreaks = (editor.layout instanceof WordwrapLayout) ? ((WordwrapLayout) editor.layout).getSoftBreaksForLine(startLine) : null;
+                List<Integer> softBreaks = (editor.layout instanceof WordwrapLayout) ? ((WordwrapLayout) editor.layout).getSoftBreaksForLine(startLine) : null;
                 gtr.setSoftBreaks(softBreaks);
-                var hash = Objects.hash(spans, line.length(), editor.getTabWidth(), basicDisplayMode, softBreaks, paintGeneral.getFlags(), paintGeneral.getTextSize(), paintGeneral.getTextScaleX(), paintGeneral.getLetterSpacing(), paintGeneral.getFontFeatureSettings());
+                int hash = Objects.hash(spans, line.length(), editor.getTabWidth(), basicDisplayMode, softBreaks, paintGeneral.getFlags(), paintGeneral.getTextSize(), paintGeneral.getTextScaleX(), paintGeneral.getLetterSpacing(), paintGeneral.getFontFeatureSettings());
                 if (line.styleHash != hash || forced) {
                     gtr.buildMeasureCache();
                     line.styleHash = hash;
@@ -2515,11 +2522,11 @@ public class EditorRenderer {
      */
     @UnsupportedUserUsage
     public float measureText(ContentLine text, int line, int index, int count) {
-        var cache = text.widthCache;
+        float[] cache = text.widthCache;
         if (text.timestamp < displayTimestamp && cache != null || (cache != null && cache.length >= index + count)) {
             buildMeasureCacheForLines(line, line);
         }
-        var gtr = GraphicTextRow.obtain(basicDisplayMode);
+        GraphicTextRow gtr = GraphicTextRow.obtain(basicDisplayMode);
         List<Span> spans = editor.defaultSpans;
         if (text.widthCache == null) {
             spans = editor.getSpansForLine(line);
@@ -2528,7 +2535,7 @@ public class EditorRenderer {
         if (editor.layout instanceof WordwrapLayout && text.widthCache == null) {
             gtr.setSoftBreaks(((WordwrapLayout) editor.layout).getSoftBreaksForLine(line));
         }
-        var res = gtr.measureText(index, index + count);
+        float res = gtr.measureText(index, index + count);
         gtr.recycle();
         return res;
     }

@@ -25,17 +25,21 @@ package io.github.rosemoe.sora.langs.textmate.registry.reader;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tm4e.core.registry.IGrammarSource;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry;
 import io.github.rosemoe.sora.langs.textmate.registry.model.DefaultGrammarDefinition;
@@ -44,7 +48,7 @@ import io.github.rosemoe.sora.langs.textmate.registry.model.GrammarDefinition;
 public class LanguageDefinitionReader {
 
     public static List<GrammarDefinition> read(String path) {
-        var stream = FileProviderRegistry.getInstance().tryGetInputStream(path);
+        @Nullable InputStream stream = FileProviderRegistry.getInstance().tryGetInputStream(path);
         if (stream == null) {
             return Collections.emptyList();
         }
@@ -53,13 +57,13 @@ public class LanguageDefinitionReader {
 
     private static List<GrammarDefinition> read(BufferedReader bufferedReader) {
         return new GsonBuilder().registerTypeAdapter(GrammarDefinition.class, (JsonDeserializer<GrammarDefinition>) (json, typeOfT, context) -> {
-                    var object = json.getAsJsonObject();
-                    var grammarPath = object.get("grammar").getAsString();
-                    var name = object.get("name").getAsString();
-                    var scopeName = object.get("scopeName").getAsString();
+                    JsonObject object = json.getAsJsonObject();
+                    String grammarPath = object.get("grammar").getAsString();
+                    String name = object.get("name").getAsString();
+                    String scopeName = object.get("scopeName").getAsString();
 
 
-                    var embeddedLanguagesElement = object.get("embeddedLanguages");
+                    JsonElement embeddedLanguagesElement = object.get("embeddedLanguages");
 
                     JsonObject embeddedLanguages = null;
 
@@ -68,7 +72,7 @@ public class LanguageDefinitionReader {
                     }
 
 
-                    var languageConfigurationElement = object.get("languageConfiguration");
+                    JsonElement languageConfigurationElement = object.get("languageConfiguration");
 
                     String languageConfiguration = null;
 
@@ -77,21 +81,21 @@ public class LanguageDefinitionReader {
                     }
 
 
-                    var grammarInput = FileProviderRegistry.getInstance().tryGetInputStream(
+                    @Nullable InputStream grammarInput = FileProviderRegistry.getInstance().tryGetInputStream(
                             grammarPath
                     );
                     if (grammarInput == null) {
                         throw new IllegalArgumentException("grammar file can not be opened");
                     }
-                    var grammarSource = IGrammarSource.fromInputStream(grammarInput, grammarPath, Charset.defaultCharset());
+                    IGrammarSource grammarSource = IGrammarSource.fromInputStream(grammarInput, grammarPath, Charset.defaultCharset());
 
-                    var grammarDefinition = DefaultGrammarDefinition.withLanguageConfiguration(grammarSource, languageConfiguration, name, scopeName);
+                    DefaultGrammarDefinition grammarDefinition = DefaultGrammarDefinition.withLanguageConfiguration(grammarSource, languageConfiguration, name, scopeName);
 
                     if (embeddedLanguages != null) {
-                        var embeddedLanguagesMap = new HashMap<String, String>();
+                        HashMap<String, String> embeddedLanguagesMap = new HashMap<String, String>();
 
-                        for (var entry : embeddedLanguages.entrySet()) {
-                            var value = entry.getValue();
+                        for (Map.Entry<String, JsonElement> entry : embeddedLanguages.entrySet()) {
+                            JsonElement value = entry.getValue();
 
                             if (!value.isJsonNull()) {
                                 embeddedLanguagesMap.put(entry.getKey(), value.getAsString());

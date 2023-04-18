@@ -28,12 +28,12 @@ public final class EncodedTokenAttributes {
 	}
 
 	public static String toString(final int encodedTokenAttributes) {
-		final var languageId = getLanguageId(encodedTokenAttributes);
-		final var tokenType = getTokenType(encodedTokenAttributes);
-		final var fontStyle = getFontStyle(encodedTokenAttributes);
-		final var foreground = getForeground(encodedTokenAttributes);
-		final var background = getBackground(encodedTokenAttributes);
-		final var containsBalancedBrackets = containsBalancedBrackets(encodedTokenAttributes);
+		final int languageId = getLanguageId(encodedTokenAttributes);
+		final int tokenType = getTokenType(encodedTokenAttributes);
+		final int fontStyle = getFontStyle(encodedTokenAttributes);
+		final int foreground = getForeground(encodedTokenAttributes);
+		final int background = getBackground(encodedTokenAttributes);
+		final boolean containsBalancedBrackets = containsBalancedBrackets(encodedTokenAttributes);
 
 		return "{\n" +
 			"  languageId: " + languageId + ",\n" +
@@ -76,13 +76,13 @@ public final class EncodedTokenAttributes {
 	public static int set(final int metadata, final int languageId, final /*OptionalStandardTokenType*/ int tokenType,
 		@Nullable final Boolean containsBalancedBrackets, final int fontStyle, final int foreground,
 		final int background) {
-		final var _languageId = languageId == 0 ? getLanguageId(metadata) : languageId;
-		final var _tokenType = tokenType == OptionalStandardTokenType.NotSet ? getTokenType(metadata) : tokenType;
-		final var _containsBalancedBracketsBit = (containsBalancedBrackets == null ? containsBalancedBrackets(metadata)
+		final int _languageId = languageId == 0 ? getLanguageId(metadata) : languageId;
+		final int _tokenType = tokenType == OptionalStandardTokenType.NotSet ? getTokenType(metadata) : tokenType;
+		final int _containsBalancedBracketsBit = (containsBalancedBrackets == null ? containsBalancedBrackets(metadata)
 			: containsBalancedBrackets) ? 1 : 0;
-		final var _fontStyle = fontStyle == FontStyle.NotSet ? getFontStyle(metadata) : fontStyle;
-		final var _foreground = foreground == 0 ? getForeground(metadata) : foreground;
-		final var _background = background == 0 ? getBackground(metadata) : background;
+		final int _fontStyle = fontStyle == FontStyle.NotSet ? getFontStyle(metadata) : fontStyle;
+		final int _foreground = foreground == 0 ? getForeground(metadata) : foreground;
+		final int _background = background == 0 ? getBackground(metadata) : background;
 
 		return (_languageId << EncodedTokenDataConsts.LANGUAGEID_OFFSET
 			| _tokenType << EncodedTokenDataConsts.TOKEN_TYPE_OFFSET

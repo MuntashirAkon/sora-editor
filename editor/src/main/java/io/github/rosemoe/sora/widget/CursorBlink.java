@@ -28,6 +28,7 @@ import androidx.annotation.NonNull;
 import io.github.rosemoe.sora.event.EventReceiver;
 import io.github.rosemoe.sora.event.SelectionChangeEvent;
 import io.github.rosemoe.sora.event.Unsubscribe;
+import io.github.rosemoe.sora.text.CharPosition;
 
 /**
  * This class is used to control cursor visibility
@@ -80,7 +81,7 @@ final class CursorBlink implements Runnable, EventReceiver<SelectionChangeEvent>
         if (valid && period > 0) {
             if (System.currentTimeMillis() - lastSelectionModificationTime >= period * 2L) {
                 visibility = !visibility;
-                var left = editor.getCursor().left();
+                CharPosition left = editor.getCursor().left();
                 buffer = editor.getLayout().getCharLayoutOffset(left.line, left.column, buffer);
                 if (!editor.getCursor().isSelected() && isSelectionVisible()) {
                     editor.postInvalidate();

@@ -109,7 +109,7 @@ public class LspUtils {
         if (lock == null) {
             lock = new ReentrantReadWriteLock();
         }
-        var readLock = lock.readLock();
+        ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
         readLock.lock();
         Integer version = versionMap.getOrDefault(uri, 0);
         if (version == null) {
@@ -117,7 +117,7 @@ public class LspUtils {
         }
         version++;
         readLock.unlock();
-        var writeLock = lock.writeLock();
+        ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
         writeLock.lock();
         versionMap.put(uri, version);
         writeLock.unlock();
@@ -125,7 +125,7 @@ public class LspUtils {
     }
 
     public static DidOpenTextDocumentParams createDidOpenTextDocumentParams(String uri, String languageId, String content) {
-        var params = new DidOpenTextDocumentParams();
+        DidOpenTextDocumentParams params = new DidOpenTextDocumentParams();
 
         params.setTextDocument(new TextDocumentItem(uri, languageId, getVersion(uri), content));
         return params;
@@ -196,12 +196,12 @@ public class LspUtils {
     }
 
     public static List<DiagnosticRegion> transformToEditorDiagnostics(CodeEditor editor, List<Diagnostic> diagnostics) {
-        var result = new ArrayList<DiagnosticRegion>();
-        var id = 0;
-        for (var diagnosticSource : diagnostics) {
+        ArrayList<DiagnosticRegion> result = new ArrayList<DiagnosticRegion>();
+        int id = 0;
+        for (Diagnostic diagnosticSource : diagnostics) {
             Log.w("diagnostic message", "diagnostic: " + diagnosticSource.getMessage());
 
-            var diagnostic = new DiagnosticRegion(getIndexForPosition(editor, diagnosticSource.getRange().getStart()),
+            DiagnosticRegion diagnostic = new DiagnosticRegion(getIndexForPosition(editor, diagnosticSource.getRange().getStart()),
                     getIndexForPosition(editor, diagnosticSource.getRange().getEnd()),
                     transformToEditorDiagnosticSeverity(diagnosticSource.getSeverity()), id++,
                     new DiagnosticDetail(

@@ -80,8 +80,8 @@ public class TextUtils {
     }
 
     public static int indexOf(@NonNull CharSequence text, @NonNull CharSequence pattern, boolean ignoreCase, int fromIndex) {
-        var max = text.length() - pattern.length();
-        var len = pattern.length();
+        int max = text.length() - pattern.length();
+        int len = pattern.length();
         label:
         for (int i = fromIndex; i <= max; i++) {
             // Compare
@@ -98,7 +98,7 @@ public class TextUtils {
     }
 
     public static int lastIndexOf(@NonNull CharSequence text, @NonNull CharSequence pattern, boolean ignoreCase, int fromIndex) {
-        var len = pattern.length();
+        int len = pattern.length();
         fromIndex = Math.min(fromIndex, text.length() - len);
         label:
         for (int i = fromIndex; i >= 0; i--) {
@@ -119,7 +119,7 @@ public class TextUtils {
         if (text.length() < pattern.length()) {
             return false;
         }
-        var len = pattern.length();
+        int len = pattern.length();
         for (int i = 0; i < len; i++) {
             char s = text.charAt(i);
             char p = pattern.charAt(i);
@@ -138,7 +138,7 @@ public class TextUtils {
         if (src.length() >= length) {
             return src;
         }
-        var sb = new StringBuilder(length);
+        StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length - src.length(); i++) {
             sb.append(padChar);
         }
@@ -152,7 +152,7 @@ public class TextUtils {
      * @param line The line to search
      */
     public static long findLeadingAndTrailingWhitespacePos(ContentLine line) {
-        var buffer = line.value;
+        char[] buffer = line.value;
         int column = line.length();
         int leading = 0;
         int trailing = column;

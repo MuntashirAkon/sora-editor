@@ -67,7 +67,7 @@ class TextRegionIterator extends RegionIterator {
      * Get current {@link Span} for current region
      */
     public Span getSpan() {
-        var idx = getRegionSourcePointer(0) - 1;
+        int idx = getRegionSourcePointer(0) - 1;
         if (idx < 0) {
             return Span.obtain(0, EditorColorScheme.TEXT_NORMAL);
         }

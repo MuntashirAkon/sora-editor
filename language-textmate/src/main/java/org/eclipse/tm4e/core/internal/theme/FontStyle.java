@@ -37,7 +37,7 @@ public final class FontStyle {
             return "none";
         }
 
-        final var style = new StringBuilder();
+        final StringBuilder style = new StringBuilder();
         if ((fontStyle & Italic) == Italic) {
             style.append("italic ");
         }

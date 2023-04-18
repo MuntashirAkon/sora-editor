@@ -51,8 +51,8 @@ public final class CharacterPairSupport {
 
 	@SuppressWarnings("unchecked")
 	public CharacterPairSupport(LanguageConfiguration config) {
-		final var autoClosingPairs = config.getAutoClosingPairs();
-		final var brackets = config.getBrackets();
+		final @Nullable List<AutoClosingPairConditional> autoClosingPairs = config.getAutoClosingPairs();
+		final @Nullable List<org.eclipse.tm4e.languageconfiguration.model.CharacterPair> brackets = config.getBrackets();
 
 		if (autoClosingPairs != null) {
 			this.autoClosingPairs = autoClosingPairs.stream().filter(Objects::nonNull)
@@ -66,12 +66,12 @@ public final class CharacterPairSupport {
 			this.autoClosingPairs = Collections.emptyList();
 		}
 
-		final var autoCloseBefore = config.getAutoCloseBefore();
+		final @Nullable String autoCloseBefore = config.getAutoCloseBefore();
 		this.autoCloseBefore = autoCloseBefore != null
 				? autoCloseBefore
 				: CharacterPairSupport.DEFAULT_AUTOCLOSE_BEFORE_LANGUAGE_DEFINED;
 
-		final var surroundingPairs = config.getSurroundingPairs();
+		final @Nullable List<AutoClosingPair> surroundingPairs = config.getSurroundingPairs();
 		this.surroundingPairs = surroundingPairs != null
 				? surroundingPairs.stream().filter(Objects::nonNull).collect(Collectors.toList())
 				: (List<AutoClosingPair>) (List<?>) this.autoClosingPairs;

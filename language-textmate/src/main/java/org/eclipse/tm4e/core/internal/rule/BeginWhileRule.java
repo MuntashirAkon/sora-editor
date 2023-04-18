@@ -80,13 +80,13 @@ public final class BeginWhileRule extends Rule {
 	}
 
 	private RegExpSourceList getCachedCompiledPatterns(final IRuleRegistry grammar) {
-		var cachedCompiledPatterns = this.cachedCompiledPatterns;
+		@Nullable RegExpSourceList cachedCompiledPatterns = this.cachedCompiledPatterns;
 		if (cachedCompiledPatterns == null) {
 			cachedCompiledPatterns = new RegExpSourceList();
 			this.cachedCompiledPatterns = cachedCompiledPatterns;
 
-			for (final var pattern : this.patterns) {
-				final var rule = grammar.getRule(pattern);
+			for (final RuleId pattern : this.patterns) {
+				final Rule rule = grammar.getRule(pattern);
 				rule.collectPatterns(grammar, cachedCompiledPatterns);
 			}
 		}
@@ -103,7 +103,7 @@ public final class BeginWhileRule extends Rule {
 	}
 
 	private RegExpSourceList getCachedCompiledWhilePatterns(@Nullable final String endRegexSource) {
-		var cachedCompiledWhilePatterns = this.cachedCompiledWhilePatterns;
+		@Nullable RegExpSourceList cachedCompiledWhilePatterns = this.cachedCompiledWhilePatterns;
 		if (cachedCompiledWhilePatterns == null) {
 			cachedCompiledWhilePatterns = new RegExpSourceList();
 			cachedCompiledWhilePatterns.add(this.whileHasBackReferences ? this._while.clone() : this._while);

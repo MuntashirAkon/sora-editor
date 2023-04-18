@@ -42,13 +42,13 @@ public final class CompositeSnippetVariableResolver implements ISnippetVariableR
             throw new IllegalArgumentException();
         }
         Objects.requireNonNull(resolver, "resolver must not be null");
-        for (var name : resolver.getResolvableNames()) {
+        for (String name : resolver.getResolvableNames()) {
             resolverMap.put(name, resolver);
         }
     }
 
     public void removeResolver(@NonNull ISnippetVariableResolver resolver) {
-        for (var name : resolver.getResolvableNames()) {
+        for (String name : resolver.getResolvableNames()) {
             if (resolverMap.get(name) == resolver) {
                 resolverMap.remove(name);
             }
@@ -68,7 +68,7 @@ public final class CompositeSnippetVariableResolver implements ISnippetVariableR
     @NonNull
     @Override
     public String resolve(@NonNull String name) {
-        var resolver = resolverMap.get(name);
+        ISnippetVariableResolver resolver = resolverMap.get(name);
         if (resolver != null) {
             return resolver.resolve(name);
         }

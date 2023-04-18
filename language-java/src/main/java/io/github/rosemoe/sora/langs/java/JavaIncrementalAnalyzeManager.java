@@ -51,7 +51,7 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
     protected IdentifierAutoComplete.SyncIdentifiers identifiers = new IdentifierAutoComplete.SyncIdentifiers();
 
     private synchronized JavaTextTokenizer obtainTokenizer() {
-        var res = tokenizerProvider.get();
+        JavaTextTokenizer res = tokenizerProvider.get();
         if (res == null) {
             res = new JavaTextTokenizer("");
             tokenizerProvider.set(res);
@@ -61,22 +61,22 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
 
     @Override
     public List<CodeBlock> computeBlocks(Content text, AsyncIncrementalAnalyzeManager<State, Long>.CodeBlockAnalyzeDelegate delegate) {
-        var stack = new Stack<CodeBlock>();
-        var blocks = new ArrayList<CodeBlock>();
-        var maxSwitch = 0;
-        var currSwitch = 0;
-        var brackets = new SimpleBracketsCollector();
-        var bracketsStack = new Stack<Long>();
+        Stack<CodeBlock> stack = new Stack<CodeBlock>();
+        ArrayList<CodeBlock> blocks = new ArrayList<CodeBlock>();
+        int maxSwitch = 0;
+        int currSwitch = 0;
+        SimpleBracketsCollector brackets = new SimpleBracketsCollector();
+        Stack<Long> bracketsStack = new Stack<Long>();
         for (int i = 0; i < text.getLineCount() && delegate.isNotCancelled(); i++) {
-            var state = getState(i);
+            LineTokenizeResult<State, Long> state = getState(i);
             boolean checkForIdentifiers = state.state.state == STATE_NORMAL || (state.state.state == STATE_INCOMPLETE_COMMENT && state.tokens.size() > 1);
             if (state.state.hasBraces || checkForIdentifiers) {
                 // Iterate tokens
                 for (int i1 = 0; i1 < state.tokens.size(); i1++) {
-                    var tokenRecord = state.tokens.get(i1);
-                    var token = IntPair.getFirst(tokenRecord);
+                    long tokenRecord = state.tokens.get(i1);
+                    int token = IntPair.getFirst(tokenRecord);
                     if (token == ORDINAL_LBRACE) {
-                        var offset = IntPair.getSecond(tokenRecord);
+                        int offset = IntPair.getSecond(tokenRecord);
                         if (stack.isEmpty()) {
                             if (currSwitch > maxSwitch) {
                                 maxSwitch = currSwitch;
@@ -89,7 +89,7 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
                         block.startColumn = offset;
                         stack.push(block);
                     } else if (token == ORDINAL_RBRACE) {
-                        var offset = IntPair.getSecond(tokenRecord);
+                        int offset = IntPair.getSecond(tokenRecord);
                         if (!stack.isEmpty()) {
                             CodeBlock block = stack.pop();
                             block.endLine = i;
@@ -99,14 +99,14 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
                             }
                         }
                     }
-                    var type = getType(token);
+                    int type = getType(token);
                     if (type > 0) {
                         if (isStart(token)) {
                             bracketsStack.push(IntPair.pack(type, text.getCharIndex(i, IntPair.getSecond(tokenRecord))));
                         } else {
                             if (!bracketsStack.isEmpty()) {
-                                var record = bracketsStack.pop();
-                                var typeRecord = IntPair.getFirst(record);
+                                Long record = bracketsStack.pop();
+                                int typeRecord = IntPair.getFirst(record);
                                 if (typeRecord == type) {
                                     brackets.add(IntPair.getSecond(record), text.getCharIndex(i, IntPair.getSecond(tokenRecord)));
                                 } else if (type == 3) {
@@ -185,13 +185,13 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
 
     @Override
     public LineTokenizeResult<State, Long> tokenizeLine(CharSequence line, State state, int lineIndex) {
-        var tokens = new ArrayList<Long>();
+        ArrayList<Long> tokens = new ArrayList<Long>();
         int newState = 0;
-        var stateObj = new State();
+        State stateObj = new State();
         if (state.state == STATE_NORMAL) {
             newState = tokenizeNormal(line, 0, tokens, stateObj);
         } else if (state.state == STATE_INCOMPLETE_COMMENT) {
-            var res = tryFillIncompleteComment(line, tokens);
+            long res = tryFillIncompleteComment(line, tokens);
             newState = IntPair.getFirst(res);
             if (newState == STATE_NORMAL) {
                 newState = tokenizeNormal(line, IntPair.getSecond(res), tokens, stateObj);
@@ -226,7 +226,7 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
     }
 
     private int tokenizeNormal(CharSequence text, int offset, List<Long> tokens, State st) {
-        var tokenizer = obtainTokenizer();
+        JavaTextTokenizer tokenizer = obtainTokenizer();
         tokenizer.reset(text);
         tokenizer.offset = offset;
         Tokens token;
@@ -253,13 +253,13 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
 
     @Override
     public List<Span> generateSpansForLine(LineTokenizeResult<State, Long> lineResult) {
-        var spans = new ArrayList<Span>();
-        var tokens = lineResult.tokens;
+        ArrayList<Span> spans = new ArrayList<Span>();
+        List<Long> tokens = lineResult.tokens;
         Tokens previous = Tokens.UNKNOWN;
         boolean classNamePrevious = false;
         for (int i = 0; i < tokens.size(); i++) {
-            var tokenRecord = tokens.get(i);
-            var token = ordinalToToken(IntPair.getFirst(tokenRecord));
+            Long tokenRecord = tokens.get(i);
+            Tokens token = ordinalToToken(IntPair.getFirst(tokenRecord));
             int offset = IntPair.getSecond(tokenRecord);
             switch (token) {
                 case WHITESPACE:
@@ -351,7 +351,7 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
                         } else {
                             // Peek next token
                             int j = i + 1;
-                            var next = Tokens.UNKNOWN;
+                            Tokens next = Tokens.UNKNOWN;
                             label:
                             while (j < tokens.size()) {
                                 next = ordinalToToken(IntPair.getFirst(tokens.get(j)));
@@ -401,9 +401,9 @@ public class JavaIncrementalAnalyzeManager extends AsyncIncrementalAnalyzeManage
 
     private static Tokens ordinalToToken(int ordinal) {
         if (mapping == null) {
-            var tokens = Tokens.values();
+            Tokens[] tokens = Tokens.values();
             mapping = new Tokens[tokens.length];
-            for (var token : tokens) {
+            for (Tokens token : tokens) {
                 mapping[token.ordinal()] = token;
             }
         }

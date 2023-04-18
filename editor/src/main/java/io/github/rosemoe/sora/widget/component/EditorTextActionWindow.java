@@ -41,6 +41,7 @@ import io.github.rosemoe.sora.event.LongPressEvent;
 import io.github.rosemoe.sora.event.ScrollEvent;
 import io.github.rosemoe.sora.event.SelectionChangeEvent;
 import io.github.rosemoe.sora.event.Unsubscribe;
+import io.github.rosemoe.sora.text.Cursor;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.EditorTouchEventHandler;
 import io.github.rosemoe.sora.widget.base.EditorPopupWindow;
@@ -94,7 +95,7 @@ public class EditorTextActionWindow extends EditorPopupWindow implements View.On
         rootView = root;
         editor.subscribeEvent(SelectionChangeEvent.class, this);
         editor.subscribeEvent(ScrollEvent.class, ((event, unsubscribe) -> {
-            var last = lastScroll;
+            long last = lastScroll;
             lastScroll = System.currentTimeMillis();
             if (lastScroll - last < DELAY && lastCause != SelectionChangeEvent.CAUSE_SEARCH) {
                 postDisplay();
@@ -107,7 +108,7 @@ public class EditorTextActionWindow extends EditorPopupWindow implements View.On
         }));
         editor.subscribeEvent(LongPressEvent.class, ((event, unsubscribe) -> {
             if (editor.getCursor().isSelected() && lastCause == SelectionChangeEvent.CAUSE_SEARCH) {
-                var idx = event.getIndex();
+                int idx = event.getIndex();
                 if (idx >= editor.getCursor().getLeft() && idx <= editor.getCursor().getRight()) {
                     lastCause = 0;
                     displayWindow();
@@ -204,7 +205,7 @@ public class EditorTextActionWindow extends EditorPopupWindow implements View.On
             }
             lastPosition = -1;
         } else {
-            var show = false;
+            boolean show = false;
             if (event.getCause() == SelectionChangeEvent.CAUSE_TAP && event.getLeft().index == lastPosition && !isShowing() && !editor.getText().isInBatchEdit() && editor.isEditable()) {
                 editor.postInLifecycle(this::displayWindow);
                 show = true;
@@ -220,7 +221,7 @@ public class EditorTextActionWindow extends EditorPopupWindow implements View.On
     }
 
     private int selectTop(@NonNull RectF rect) {
-        var rowHeight = editor.getRowHeight();
+        int rowHeight = editor.getRowHeight();
         if (rect.top - rowHeight * 3 / 2F > getHeight()) {
             return (int) (rect.top - rowHeight * 3 / 2 - getHeight());
         } else {
@@ -231,12 +232,12 @@ public class EditorTextActionWindow extends EditorPopupWindow implements View.On
     public void displayWindow() {
         updateBtnState();
         int top;
-        var cursor = editor.getCursor();
+        Cursor cursor = editor.getCursor();
         if (cursor.isSelected()) {
-            var leftRect = editor.getLeftHandleDescriptor().position;
-            var rightRect = editor.getRightHandleDescriptor().position;
-            var top1 = selectTop(leftRect);
-            var top2 = selectTop(rightRect);
+            RectF leftRect = editor.getLeftHandleDescriptor().position;
+            RectF rightRect = editor.getRightHandleDescriptor().position;
+            int top1 = selectTop(leftRect);
+            int top2 = selectTop(rightRect);
             top = Math.min(top1, top2);
         } else {
             top = selectTop(editor.getInsertHandleDescriptor().position);

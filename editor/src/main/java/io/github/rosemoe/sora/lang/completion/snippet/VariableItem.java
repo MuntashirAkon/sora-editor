@@ -73,7 +73,7 @@ public class VariableItem extends SnippetItem implements PlaceHolderElement {
     @NonNull
     @Override
     public VariableItem clone() {
-        var n = new VariableItem(getStartIndex(), name, defaultValue);
+        VariableItem n = new VariableItem(getStartIndex(), name, defaultValue);
         n.setIndex(getStartIndex(), getEndIndex());
         return n;
     }

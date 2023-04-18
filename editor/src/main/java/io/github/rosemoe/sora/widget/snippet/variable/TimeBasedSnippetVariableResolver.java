@@ -40,8 +40,8 @@ import java.util.Locale;
 public class TimeBasedSnippetVariableResolver implements ISnippetVariableResolver {
 
     private static String getDisplayName(int field, boolean shortType) {
-        var c = Calendar.getInstance();
-        var result = c.getDisplayName(field, shortType ? Calendar.SHORT : Calendar.LONG, Locale.getDefault());
+        Calendar c = Calendar.getInstance();
+        String result = c.getDisplayName(field, shortType ? Calendar.SHORT : Calendar.LONG, Locale.getDefault());
         if (result == null && shortType) {
             result = c.getDisplayName(field, Calendar.LONG, Locale.getDefault());
         }

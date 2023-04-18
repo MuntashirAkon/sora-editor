@@ -25,9 +25,12 @@ package io.github.rosemoe.sora.langs.textmate;
 
 import android.graphics.Color;
 
+import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tm4e.core.internal.theme.IRawTheme;
+import org.eclipse.tm4e.core.internal.theme.IRawThemeSetting;
 import org.eclipse.tm4e.core.internal.theme.Theme;
 import org.eclipse.tm4e.core.internal.theme.ThemeRaw;
 import org.eclipse.tm4e.core.registry.IThemeSource;
@@ -99,7 +102,7 @@ public class TextMateColorScheme extends EditorColorScheme implements ThemeRegis
         if (rawTheme == null) {
             return;
         }
-        var settings = rawTheme.getSettings();
+        @Nullable Collection<IRawThemeSetting> settings = rawTheme.getSettings();
 
         ThemeRaw themeRaw;
 
@@ -197,7 +200,7 @@ public class TextMateColorScheme extends EditorColorScheme implements ThemeRegis
 
     @Override
     public boolean isDark() {
-        var superIsDark =  super.isDark();
+        boolean superIsDark =  super.isDark();
         if (superIsDark) {
             return true;
         }
@@ -260,11 +263,11 @@ public class TextMateColorScheme extends EditorColorScheme implements ThemeRegis
     public int getColor(int type) {
         if (type >= 255) {
             // Cache colors in super class
-            var superColor = super.getColor(type);
+            int superColor = super.getColor(type);
             if (superColor == 0) {
                 if (theme != null) {
                     String color = theme.getColor(type - 255);
-                    var newColor = color != null ? Color.parseColor(color) : super.getColor(TEXT_NORMAL);
+                    int newColor = color != null ? Color.parseColor(color) : super.getColor(TEXT_NORMAL);
                     super.colors.put(type, newColor);
                     return newColor;
                 }

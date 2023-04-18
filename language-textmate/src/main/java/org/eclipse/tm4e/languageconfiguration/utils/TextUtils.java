@@ -53,7 +53,7 @@ public class TextUtils {
             }
         }
 
-        final var result = new StringBuilder();
+        final StringBuilder result = new StringBuilder();
         if (!insertSpaces) {
             final long tabsCnt = Math.round(Math.floor(spacesCnt / tabSize));
             spacesCnt = spacesCnt % tabSize;
@@ -84,7 +84,7 @@ public class TextUtils {
     }
 
     public static String getIndentationFromWhitespace(final String whitespace, final TabSpacesInfo tabSpaces) {
-        final var tab = "\t"; //$NON-NLS-1$
+        final String tab = "\t"; //$NON-NLS-1$
         int indentOffset = 0;
         boolean startsWithTab = true;
         boolean startsWithSpaces = true;
@@ -106,9 +106,9 @@ public class TextUtils {
 
     public static String getLinePrefixingWhitespaceAtPosition(final Content d, final CharPosition position) {
 
-        var line = d.getLine(position.line);
+        io.github.rosemoe.sora.text.ContentLine line = d.getLine(position.line);
 
-        var startIndex = IntPair.getFirst(io.github.rosemoe.sora.text.TextUtils.findLeadingAndTrailingWhitespacePos(
+        int startIndex = IntPair.getFirst(io.github.rosemoe.sora.text.TextUtils.findLeadingAndTrailingWhitespacePos(
                 line
         ));
 
@@ -122,8 +122,8 @@ public class TextUtils {
      * If the string contains only whitespaces, returns entire string
      */
     public static String getLeadingWhitespace(String str, int start, int end) {
-        for (var i = start; i < end; i++) {
-            var chCode = str.charAt(i);
+        for (int i = start; i < end; i++) {
+            char chCode = str.charAt(i);
             if (chCode != 32 /*CharCode.Space*/ && chCode != 9/*CharCode.Tab*/) {
                 return str.substring(start, i);
             }
@@ -154,8 +154,8 @@ public class TextUtils {
         if (text.length()<1) {
             return true;
         }
-        for (var i = 0; i < text.length(); i++) {
-            var chCode = text.charAt(i);
+        for (int i = 0; i < text.length(); i++) {
+            char chCode = text.charAt(i);
             if (chCode != 32 /*CharCode.Space*/ && chCode != 9/*CharCode.Tab*/) {
                 return false;
             }

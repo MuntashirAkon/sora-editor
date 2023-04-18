@@ -23,6 +23,7 @@
  */
 package io.github.rosemoe.sora.lang.styling;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -41,9 +42,9 @@ public class BlocksUpdater {
         if (delta == 0) {
             return;
         }
-        var itr = blocks.iterator();
+        Iterator<CodeBlock> itr = blocks.iterator();
         while (itr.hasNext()) {
-            var block = itr.next();
+            CodeBlock block = itr.next();
             if (block.startLine >= restrict) {
                 block.startLine += delta;
             }

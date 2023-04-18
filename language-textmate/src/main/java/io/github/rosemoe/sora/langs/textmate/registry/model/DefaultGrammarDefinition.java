@@ -97,12 +97,12 @@ public class DefaultGrammarDefinition implements GrammarDefinition {
     }
 
     public static DefaultGrammarDefinition withGrammarSource(IGrammarSource grammarSource) {
-        var languageNameByPath = StringUtils.getFileNameWithoutExtension(grammarSource.getFilePath());
+        String languageNameByPath = StringUtils.getFileNameWithoutExtension(grammarSource.getFilePath());
         return withGrammarSource(grammarSource, languageNameByPath, "source." + languageNameByPath);
     }
 
     public static DefaultGrammarDefinition withLanguageConfiguration(IGrammarSource grammarSource, String languageConfigurationPath) {
-        var languageNameByPath = StringUtils.getFileNameWithoutExtension(grammarSource.getFilePath());
+        String languageNameByPath = StringUtils.getFileNameWithoutExtension(grammarSource.getFilePath());
         return withLanguageConfiguration(grammarSource, languageConfigurationPath, languageNameByPath, "source." + languageNameByPath);
     }
 

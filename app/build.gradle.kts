@@ -58,6 +58,8 @@ android {
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     androidResources {
         additionalParameters.add("--warn-manifest-validation")
@@ -66,7 +68,7 @@ android {
         viewBinding = true
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
     packagingOptions {
         resources.pickFirsts.addAll(
@@ -111,7 +113,7 @@ dependencies {
     implementation(fileTree("dir" to "libs", "includes" to listOf("*.jar")))
     implementation(libs.lsp4j)
 
-    debugImplementation(libs.leakcanary)
+    // debugImplementation(libs.leakcanary)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso)

@@ -23,7 +23,6 @@
  */
 package org.eclipse.tm4e.languageconfiguration.supports;
 
-import org.eclipse.tm4e.core.internal.oniguruma.OnigString;
 import org.eclipse.tm4e.languageconfiguration.model.IndentationRules;
 import org.eclipse.tm4e.languageconfiguration.utils.TextUtils;
 

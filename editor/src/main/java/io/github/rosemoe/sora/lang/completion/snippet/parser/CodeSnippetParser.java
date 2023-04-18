@@ -70,7 +70,7 @@ public class CodeSnippetParser {
 
     private String _accept(TokenType type) {
         if (token.type == type) {
-            var text = src.substring(token.index, token.index + token.length);
+            String text = src.substring(token.index, token.index + token.length);
             next();
             return text;
         }
@@ -78,7 +78,7 @@ public class CodeSnippetParser {
     }
 
     private boolean accept(TokenType... types) {
-        for (var type : types) {
+        for (TokenType type : types) {
             if (token.type == type) {
                 next();
                 return true;
@@ -89,13 +89,13 @@ public class CodeSnippetParser {
 
     private String _accept(TokenType... types) {
         if (types.length == 0) {
-            var text = src.substring(token.index, token.index + token.length);
+            String text = src.substring(token.index, token.index + token.length);
             next();
             return text;
         }
-        for (var type : types) {
+        for (TokenType type : types) {
             if (token.type == type) {
-                var text = src.substring(token.index, token.index + token.length);
+                String text = src.substring(token.index, token.index + token.length);
                 next();
                 return text;
             }
@@ -126,7 +126,7 @@ public class CodeSnippetParser {
 
     private boolean parseEscaped() {
         if (accept(TokenType.Backslash)) {
-            var escaped = _accept(TokenType.CurlyClose, TokenType.Dollar, TokenType.Backslash, TokenType.Backtick);
+            String escaped = _accept(TokenType.CurlyClose, TokenType.Dollar, TokenType.Backslash, TokenType.Backtick);
             if (escaped == null) {
                 escaped = "\\";
             }
@@ -138,9 +138,9 @@ public class CodeSnippetParser {
     }
 
     private boolean parseInterpolatedShell() {
-        var backup = token;
+        Token backup = token;
         if (accept(TokenType.Backtick)) {
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             while (!accept(TokenType.Backtick)) {
                 if (accept(TokenType.Backslash)) {
                     if (accept(TokenType.Backtick)) {
@@ -163,7 +163,7 @@ public class CodeSnippetParser {
     }
 
     private boolean parseTabStopOrVariableName() {
-        var backup = token;
+        Token backup = token;
         if (accept(TokenType.Dollar)) {
             String text;
             if ((text = _accept(TokenType.Int)) != null) {
@@ -180,7 +180,7 @@ public class CodeSnippetParser {
     }
 
     private boolean parseComplexVariable() {
-        final var variable = _parseComplexVariable();
+        final VariableItem variable = _parseComplexVariable();
         if (variable != null) {
             builder.addVariable(variable);
         }
@@ -189,14 +189,14 @@ public class CodeSnippetParser {
 
     @Nullable
     private VariableItem _parseComplexVariable() {
-        var backup = token;
+        Token backup = token;
         String text;
         if (accept(TokenType.Dollar) && accept(TokenType.CurlyOpen) && (text = _accept(TokenType.VariableName)) != null) {
-            var variableName = text;
+            String variableName = text;
             String defaultValue = null;
             if (accept(TokenType.Colon)) {
                 // ${name:xxx}
-                var sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
                 while (!accept(TokenType.CurlyClose)) {
                     if (accept(TokenType.Backslash)) {
                         if ((text = _accept(TokenType.Backslash, TokenType.Dollar, TokenType.CurlyClose)) != null) {
@@ -215,7 +215,7 @@ public class CodeSnippetParser {
                 return new VariableItem(-1, variableName, sb.toString());
             } else if (accept(TokenType.Forwardslash)) {
                 // ${name/regexp/format/options}
-                var transform = new Transform();
+                Transform transform = new Transform();
                 if (parseTransform(transform)) {
                     return new VariableItem(-1, variableName, null, transform);
                 }
@@ -235,13 +235,13 @@ public class CodeSnippetParser {
     }
 
     private boolean parseComplexPlaceholder() {
-        var backup = token;
+        Token backup = token;
         String text;
         if (accept(TokenType.Dollar) && accept(TokenType.CurlyOpen) && (text = _accept(TokenType.Int)) != null) {
-            var idText = text;
+            String idText = text;
             if (accept(TokenType.Colon)) {
                 // ${1:xxx}
-                final var elements = new ArrayList<PlaceHolderElement>();
+                final ArrayList<PlaceHolderElement> elements = new ArrayList<PlaceHolderElement>();
                 while (!accept(TokenType.CurlyClose)) {
                     if (accept(TokenType.Backslash)) {
                         String t;
@@ -256,29 +256,29 @@ public class CodeSnippetParser {
                         backTo(backup);
                         return false;
                     } else {
-                        var v = parseSimpleVariableName();
+                        String v = parseSimpleVariableName();
                         if (v != null) {
                             elements.add(new VariableItem(token.index, v, ""));
                             continue;
                         }
 
-                        var vi = _parseComplexVariable();
+                        VariableItem vi = _parseComplexVariable();
                         if (vi != null) {
                             vi.setIndex(token.index);
                             elements.add(vi);
                             continue;
                         }
 
-                        var t = src.substring(token.index, token.index + token.length);
+                        String t = src.substring(token.index, token.index + token.length);
                         appendPlaceholderElement(elements, t);
                         next();
                     }
                 }
-                final var id = Integer.parseInt(idText);
+                final int id = Integer.parseInt(idText);
                 builder.addComplexPlaceholder(id, elements);
             } else if (accept(TokenType.Pipe)) {
                 // ${1|one,two,three|}
-                var choices = new ArrayList<String>();
+                ArrayList<String> choices = new ArrayList<String>();
                 while (true) {
                     if (parseChoiceElement(choices)) {
                         if (accept(TokenType.Comma)) {
@@ -295,7 +295,7 @@ public class CodeSnippetParser {
                 }
             } else if (accept(TokenType.Forwardslash)) {
                 // ${1/regexp/format/options}
-                var transform = new Transform();
+                Transform transform = new Transform();
                 if (parseTransform(transform)) {
                     builder.addPlaceholder(Integer.parseInt(idText), transform);
                     return true;
@@ -320,7 +320,7 @@ public class CodeSnippetParser {
         if (!elements.isEmpty()) {
             if (elements.get(elements.size() - 1) instanceof PlainPlaceholderElement) {
                 // merge with the last plain placeholder element
-                var plain = (PlainPlaceholderElement) elements.get(elements.size() - 1);
+                PlainPlaceholderElement plain = (PlainPlaceholderElement) elements.get(elements.size() - 1);
                 plain.setText(plain.getText() + t);
                 return;
             }
@@ -330,10 +330,10 @@ public class CodeSnippetParser {
 
     @Nullable
     private String parseSimpleVariableName() {
-        var backup = token;
+        Token backup = token;
         if (accept(TokenType.Dollar)) {
             // Check for : $VARIABLE_NAME
-            var v = _accept(TokenType.VariableName);
+            String v = _accept(TokenType.VariableName);
             if (v != null) {
                 return v;
             }
@@ -343,8 +343,8 @@ public class CodeSnippetParser {
     }
 
     private boolean parseChoiceElement(List<String> choices) {
-        var backup = token;
-        var sb = new StringBuilder();
+        Token backup = token;
+        StringBuilder sb = new StringBuilder();
         String text;
         while (token.type != TokenType.Comma && token.type != TokenType.Pipe) {
             if (accept(TokenType.Backslash)) {
@@ -370,10 +370,10 @@ public class CodeSnippetParser {
 
     private boolean parseTransform(Transform transform) {
         // ...<regex>/<format>/<options>}
-        var backup = token;
+        Token backup = token;
 
         // (1) /regex
-        var regexValue = new StringBuilder();
+        StringBuilder regexValue = new StringBuilder();
         while (!accept(TokenType.Forwardslash)) {
             if (accept(TokenType.Backslash)) {
                 if (accept(TokenType.Forwardslash)) {
@@ -393,7 +393,7 @@ public class CodeSnippetParser {
         }
 
         // (2) /format
-        var list = new ArrayList<FormatString>();
+        ArrayList<FormatString> list = new ArrayList<FormatString>();
         while (!accept(TokenType.Forwardslash)) {
             if (accept(TokenType.Backslash)) {
                 String escaped;
@@ -418,7 +418,7 @@ public class CodeSnippetParser {
         }
 
         // (3) /option
-        var regexOptions = new StringBuilder();
+        StringBuilder regexOptions = new StringBuilder();
         while (!accept(TokenType.CurlyClose)) {
             if (token.type != TokenType.EOF) {
                 regexOptions.append(_accept());
@@ -446,18 +446,18 @@ public class CodeSnippetParser {
     }
 
     private boolean parseFormatString(List<FormatString> formatStrings) {
-        var backup = token;
+        Token backup = token;
         if (!accept(TokenType.Dollar)) {
             return false;
         }
-        var complex = accept(TokenType.CurlyOpen);
+        boolean complex = accept(TokenType.CurlyOpen);
         String text;
         if ((text = _accept(TokenType.Int)) == null) {
             backTo(backup);
             return false;
         }
         int group = Integer.parseInt(text);
-        var format = new ConditionalFormat();
+        ConditionalFormat format = new ConditionalFormat();
         format.setGroup(group);
         if (complex) {
             if (accept(TokenType.Colon)) {
@@ -470,7 +470,7 @@ public class CodeSnippetParser {
                     }
                 } else if (accept(TokenType.Plus)) {
                     // ${1:+<if>}
-                    var ifValue = until(TokenType.CurlyClose);
+                    String ifValue = until(TokenType.CurlyClose);
                     if (ifValue != null) {
                         accept(TokenType.CurlyClose);
                         format.setIfValue(ifValue);
@@ -478,7 +478,7 @@ public class CodeSnippetParser {
                         return true;
                     }
                 } else if (accept(TokenType.Dash)) {
-                    var elseValue = until(TokenType.CurlyClose);
+                    String elseValue = until(TokenType.CurlyClose);
                     if (elseValue != null) {
                         accept(TokenType.CurlyClose);
                         format.setElseValue(elseValue);
@@ -486,9 +486,9 @@ public class CodeSnippetParser {
                         return true;
                     }
                 } else if (accept(TokenType.QuestionMark)) {
-                    var ifValue = until(TokenType.Colon);
+                    String ifValue = until(TokenType.Colon);
                     accept(TokenType.Colon);
-                    var elseValue = until(TokenType.CurlyClose);
+                    String elseValue = until(TokenType.CurlyClose);
                     if (ifValue != null && elseValue != null) {
                         accept(TokenType.CurlyClose);
                         format.setIfValue(ifValue);
@@ -497,7 +497,7 @@ public class CodeSnippetParser {
                         return true;
                     }
                 } else {
-                    var elseValue = until(TokenType.CurlyClose);
+                    String elseValue = until(TokenType.CurlyClose);
                     if (elseValue != null) {
                         accept(TokenType.CurlyClose);
                         format.setElseValue(elseValue);
@@ -534,8 +534,8 @@ public class CodeSnippetParser {
     }
 
     private String until(TokenType type) {
-        var backup = token;
-        var sb = new StringBuilder();
+        Token backup = token;
+        StringBuilder sb = new StringBuilder();
         while (token.type != type) {
             if (token.type == TokenType.EOF) {
                 backTo(backup);
@@ -562,7 +562,7 @@ public class CodeSnippetParser {
     }
 
     public static CodeSnippet parse(@NonNull String snippet, @NonNull List<PlaceholderDefinition> definitions) {
-        var parser = new CodeSnippetParser(snippet, definitions);
+        CodeSnippetParser parser = new CodeSnippetParser(snippet, definitions);
         parser.parse();
         return parser.builder.build();
     }

@@ -45,13 +45,13 @@ public class ComposingText {
     }
 
     public boolean isComposing() {
-        var r = preSetComposing || startIndex >= 0 && endIndex >= 0;
+        boolean r = preSetComposing || startIndex >= 0 && endIndex >= 0;
         preSetComposing = false;
         return r;
     }
 
     public void shiftOnInsert(int insertStart, int insertEnd) {
-        var length = insertEnd - insertStart;
+        int length = insertEnd - insertStart;
         if (startIndex <= insertStart && endIndex >= insertStart) {
             endIndex += length;
         }
@@ -63,10 +63,10 @@ public class ComposingText {
     }
 
     public void shiftOnDelete(int deleteStart, int deleteEnd) {
-        var length = deleteEnd - deleteStart;
+        int length = deleteEnd - deleteStart;
         // Compute cross length
-        var sharedStart = Math.max(deleteStart, startIndex);
-        var sharedEnd = Math.min(deleteEnd, endIndex);
+        int sharedStart = Math.max(deleteStart, startIndex);
+        int sharedEnd = Math.min(deleteEnd, endIndex);
         if (sharedEnd <= sharedStart) {
             // No shared region
             if (startIndex >= deleteEnd) {
@@ -76,11 +76,11 @@ public class ComposingText {
             }
         } else {
             // Has shared region
-            var sharedLength = sharedEnd - sharedStart;
+            int sharedLength = sharedEnd - sharedStart;
             endIndex -= sharedLength;
             if (startIndex > deleteStart) {
                 // Shift left
-                var shiftLeftCount = startIndex - deleteStart;
+                int shiftLeftCount = startIndex - deleteStart;
                 startIndex -= shiftLeftCount;
                 endIndex -= shiftLeftCount;
             }

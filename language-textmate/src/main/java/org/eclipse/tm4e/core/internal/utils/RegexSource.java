@@ -55,7 +55,7 @@ public final class RegexSource {
 	 */
 	public static String escapeRegExpCharacters(final CharSequence value) {
 		final int valueLen = value.length();
-		final var sb = new StringBuilder(valueLen);
+		final StringBuilder sb = new StringBuilder(valueLen);
 		for (int i = 0; i < valueLen; i++) {
 			final char ch = value.charAt(i);
 			switch (ch) {
@@ -101,7 +101,7 @@ public final class RegexSource {
 	public static String replaceCaptures(final CharSequence regexSource, final CharSequence captureSource,
 		final OnigCaptureIndex[] captureIndices) {
 		final Matcher m = CAPTURING_REGEX_SOURCE.matcher(regexSource);
-		final var result = new StringBuffer();
+		final StringBuffer result = new StringBuffer();
 		while (m.find()) {
 			final String match = m.group();
 			final String replacement = getReplacement(match, captureSource, captureIndices);
@@ -125,7 +125,7 @@ public final class RegexSource {
 		}
 		final OnigCaptureIndex capture = captureIndices.length > index ? captureIndices[index] : null;
 		if (capture != null) {
-			var result = captureSource.subSequence(capture.start, capture.end);
+			CharSequence result = captureSource.subSequence(capture.start, capture.end);
 			// Remove leading dots that would make the selector invalid
 			while (result.length()>0 && result.charAt(0) == '.') {
 				result = result.subSequence(1, result.length());

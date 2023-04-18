@@ -100,7 +100,7 @@ public class CharSequenceIterator implements CharacterIterator {
     @NonNull
     @Override
     public Object clone() {
-        var another = new CharSequenceIterator(src);
+        CharSequenceIterator another = new CharSequenceIterator(src);
         another.index = index;
         return another;
     }

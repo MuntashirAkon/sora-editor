@@ -75,11 +75,11 @@ public class SpanRecycler {
             try {
                 while (!isInterrupted()) {
                     try {
-                        var spans = taskQueue.take();
+                        List<Span> spans = taskQueue.take();
                         int count = 0;
                         int size = spans.size();
                         for (int i = 0; i < size; i++) {
-                            var recycled = spans.remove(size - 1 - i).recycle();
+                            boolean recycled = spans.remove(size - 1 - i).recycle();
                             if (!recycled) {
                                 break;
                             }

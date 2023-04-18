@@ -38,7 +38,7 @@ public class Logger {
     }
 
     public synchronized static Logger instance(String name) {
-        var logger = map.get(name);
+        Logger logger = map.get(name);
         if (logger == null) {
             logger = new Logger(name);
             map.put(name, logger);
